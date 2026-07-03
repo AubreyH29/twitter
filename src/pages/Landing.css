@@ -1,0 +1,182 @@
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: #0f1117;
+  color: #e7e9ea;
+}
+
+.landing-shell {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  height: 100vh;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 48px 72px;
+  gap: 48px;
+  align-items: center;
+}
+
+.hero-left {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.x-logo { width: 44px; height: 44px; }
+
+.avatar-group { display: flex; align-items: center; }
+
+.avatar-bubble {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 2.5px solid #0f1117;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.72rem; color: #fff;
+  margin-left: -10px; flex-shrink: 0;
+}
+.avatar-bubble:first-child { margin-left: 0; }
+.ab1 { background: #1d9bf0; }
+.ab2 { background: #7856ff; }
+.ab3 { background: #f4af3d; }
+
+.avatar-group-label {
+  margin-left: 14px; font-size: 0.82rem; color: #71767b; font-weight: 500;
+}
+
+.hero-headline {
+  font-size: clamp(2rem, 3.8vw, 3.6rem);
+  font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: #ffffff;
+}
+
+.hero-sub {
+  font-size: 0.98rem; line-height: 1.7; color: #71767b; max-width: 460px;
+}
+
+.cta-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 14px 30px; background: #ffffff; color: #0f1117;
+  border: none; border-radius: 999px; font-family: inherit; font-weight: 700;
+  font-size: 0.95rem; cursor: pointer; text-decoration: none;
+  transition: background 0.2s, transform 0.15s; white-space: nowrap;
+}
+.btn-primary:hover { background: #d7dbdf; transform: translateY(-1px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 13px 30px; background: transparent; color: #e7e9ea;
+  border: 1.5px solid rgba(231,233,234,0.25); border-radius: 999px;
+  font-family: inherit; font-weight: 600; font-size: 0.95rem;
+  cursor: pointer; text-decoration: none;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s; white-space: nowrap;
+}
+.btn-ghost:hover {
+  border-color: rgba(231,233,234,0.6);
+  background: rgba(231,233,234,0.06); transform: translateY(-1px);
+}
+
+.social-proof { font-size: 0.82rem; color: #536471; }
+
+.feature-tags {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding-top: 4px;
+}
+.feature-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 0.8rem; color: #536471; font-weight: 500;
+}
+.feature-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-blue   { background: #1d9bf0; }
+.dot-green  { background: #00ba7c; }
+.dot-yellow { background: #f4af3d; }
+.dot-pink   { background: #f91880; }
+
+.hero-right {
+  display: flex; align-items: center; justify-content: center;
+  position: relative; height: 100%;
+}
+.hero-right::before {
+  content: ''; position: absolute; width: 420px; height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(29,155,240,0.1) 0%, transparent 68%);
+  top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none;
+}
+
+.phone-wrap { position: relative; width: 288px; flex-shrink: 0; }
+
+.phone-frame {
+  width: 288px; background: #15202b; border-radius: 36px;
+  border: 2px solid #2f3336; padding: 20px 16px 16px;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.phone-status {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; padding: 0 4px;
+}
+.phone-time { font-size: 0.7rem; font-weight: 700; color: #e7e9ea; }
+.phone-icons { display: flex; gap: 5px; align-items: center; }
+.phone-icon-dot {
+  width: 16px; height: 8px; border-radius: 3px;
+  background: rgba(231,233,234,0.3);
+}
+
+.tweet-card {
+  background: #1e2d3d; border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.tweet-card:last-child { margin-bottom: 0; }
+
+.tweet-avi {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.68rem; color: #fff;
+}
+.ta1 { background: #1d9bf0; }
+.ta2 { background: #00ba7c; }
+.ta3 { background: #f4af3d; }
+.ta4 { background: #f91880; }
+
+.tweet-body { flex: 1; min-width: 0; }
+.tweet-row { display: flex; align-items: baseline; gap: 5px; overflow: hidden; }
+.tweet-name { font-size: 0.75rem; font-weight: 700; color: #e7e9ea; white-space: nowrap; }
+.tweet-handle { font-size: 0.7rem; color: #536471; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tweet-text { font-size: 0.73rem; color: #8b98a5; line-height: 1.45; margin-top: 2px; }
+.tweet-tag {
+  font-size: 0.67rem; font-weight: 700; color: #1d9bf0;
+  background: rgba(29,155,240,0.12); padding: 2px 8px; border-radius: 999px;
+  white-space: nowrap; align-self: center; flex-shrink: 0;
+}
+
+.floating-card {
+  position: absolute; background: #1e2d3d; border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.09); padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.5); width: 196px; z-index: 1;
+}
+.fc-top  { top: -16px; right: -88px; }
+.fc-bottom { bottom: 48px; left: -76px; }
+.fc-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.fc-blue  { background: rgba(29,155,240,0.18); color: #1d9bf0; }
+.fc-green { background: rgba(0,186,124,0.18);  color: #00ba7c; }
+.fc-label { flex: 1; }
+.fc-title { font-size: 0.76rem; font-weight: 700; color: #e7e9ea; }
+.fc-sub   { font-size: 0.68rem; color: #536471; margin-top: 1px; }
+
+@media (max-width: 900px) {
+  html, body, #root { overflow: auto; }
+  .landing-shell {
+    grid-template-columns: 1fr; height: auto; min-height: 100vh;
+    padding: 52px 40px 60px; gap: 52px;
+  }
+  .hero-right { justify-content: center; }
+  .floating-card { display: none; }
+}
+
+@media (max-width: 600px) {
+  .landing-shell { padding: 40px 24px 56px; }
+  .hero-headline { font-size: 2rem; }
+  .cta-row { flex-direction: column; align-items: stretch; }
+  .btn-primary, .btn-ghost { text-align: center; justify-content: center; }
+  .phone-wrap, .phone-frame { width: 252px; }
+}
