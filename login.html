@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in to X</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .login-shell {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 860px;
+      width: 100%;
+      min-height: 560px;
+      background: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 16px 60px rgba(15, 23, 42, 0.1);
+      overflow: hidden;
+    }
+
+    /* Left panel — brand / illustration */
+    .login-panel-left {
+      background: linear-gradient(160deg, #111827 0%, #1e3a5f 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      gap: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-panel-left::before {
+      content: '';
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.3) 0%, transparent 70%);
+      top: -80px;
+      right: -80px;
+    }
+
+    .login-panel-left::after {
+      content: '';
+      position: absolute;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+      bottom: -60px;
+      left: -40px;
+    }
+
+    .login-brand-icon {
+      position: relative;
+      z-index: 1;
+      width: 72px;
+      height: 72px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .login-brand-icon svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .login-panel-tagline {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .login-panel-tagline h2 {
+      color: #ffffff;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin: 0 0 8px;
+      line-height: 1.3;
+    }
+
+    .login-panel-tagline p {
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 0.9rem;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .login-panel-dots {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+    }
+
+    .login-panel-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .login-panel-dots span.active {
+      background: #2563eb;
+      width: 20px;
+      border-radius: 4px;
+    }
+
+    /* Right panel — form */
+    .login-panel-right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px 44px;
+      gap: 24px;
+    }
+
+    .login-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .login-heading h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #111827;
+      margin: 0;
+    }
+
+    .login-heading p {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    /* OAuth buttons */
+    .oauth-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .oauth-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1.5px solid #e5e7eb;
+      background: #ffffff;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #111827;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .oauth-button:hover {
+      background: #f8fafc;
+      border-color: #d1d5db;
+    }
+
+    .oauth-button svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #9ca3af;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    /* Form */
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 14px;
+      border: 1.5px solid #e5e7eb;
+      background: #f8fafc;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-sizing: border-box;
+    }
+
+    .field-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .field-input:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .field-input-wrap {
+      position: relative;
+    }
+
+    .field-input-wrap .field-input {
+      padding-right: 44px;
+    }
+
+    .field-toggle-btn {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+    }
+
+    .field-toggle-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .forgot-link {
+      align-self: flex-end;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #2563eb;
+      text-decoration: none;
+      margin-top: -6px;
+    }
+
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+
+    .login-submit-btn {
+      border: none;
+      padding: 14px 24px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+      transition: opacity 0.15s ease, box-shadow 0.15s ease;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .login-submit-btn:hover {
+      opacity: 0.92;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.38);
+    }
+
+    .login-footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    .login-footer a {
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .login-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 680px) {
+      .login-shell {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        border-radius: 24px;
+      }
+
+      .login-panel-left {
+        padding: 36px 28px;
+        gap: 20px;
+      }
+
+      .login-panel-left::before,
+      .login-panel-left::after {
+        display: none;
+      }
+
+      .login-panel-right {
+        padding: 36px 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-shell">
+
+    <!-- Left brand panel -->
+    <div class="login-panel-left">
+      <div class="login-brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M22 5.5a8.5 8.5 0 01-2.4.66 4.2 4.2 0 001.85-2.32 8.4 8.4 0 01-2.66 1.02 4.18 4.18 0 00-7.12 3.81 11.86 11.86 0 01-8.6-4.36 4.18 4.18 0 001.29 5.58 4.16 4.16 0 01-1.9-.53v.05a4.18 4.18 0 003.35 4.1 4.2 4.2 0 01-1.9.07 4.18 4.18 0 003.9 2.9 8.38 8.38 0 01-5.18 1.79A8.5 8.5 0 012 19.5a11.84 11.84 0 006.42 1.88c7.71 0 11.93-6.39 11.93-11.92 0-.18 0-.36-.01-.53A8.5 8.5 0 0022 5.5z" fill="#ffffff"/>
+        </svg>
+      </div>
+
+      <div class="login-panel-tagline">
+        <h2>Welcome back to X</h2>
+        <p>See what's happening in the world<br>right now.</p>
+      </div>
+
+      <div class="login-panel-dots">
+        <span class="active"></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="login-panel-right">
+      <div class="login-heading">
+        <h1>Sign in</h1>
+        <p>Enter your credentials to continue.</p>
+      </div>
+
+      <!-- OAuth options -->
+      <div class="oauth-group">
+        <button class="oauth-button" type="button">
+          <!-- Google icon -->
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+            <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button class="oauth-button" type="button">
+          <!-- Apple icon -->
+          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M13.53 9.49c-.02-2.04 1.67-3.02 1.74-3.07-0.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.08.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.63.8-3.33 2.02-1.43 2.47-.37 6.12 1.02 8.12.68.98 1.48 2.08 2.54 2.04 1.02-.04 1.4-.66 2.63-.66 1.22 0 1.57.66 2.64.64 1.1-.02 1.79-1 2.46-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.13-3.27z" fill="#111827"/>
+            <path d="M11.52 3.18c.56-.68.94-1.63.84-2.58-.81.04-1.8.54-2.38 1.21-.52.6-.98 1.57-.86 2.49.9.07 1.82-.46 2.4-1.12z" fill="#111827"/>
+          </svg>
+          Continue with Apple
+        </button>
+      </div>
+
+      <div class="divider">or</div>
+
+      <!-- Email / password form -->
+      <form class="login-form" action="#" method="post" onsubmit="return false;">
+        <div class="field-group">
+          <label class="field-label" for="email">Email or username</label>
+          <input
+            class="field-input"
+            id="email"
+            type="text"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="password">Password</label>
+          <div class="field-input-wrap">
+            <input
+              class="field-input"
+              id="password"
+              type="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+            <button
+              class="field-toggle-btn"
+              type="button"
+              aria-label="Toggle password visibility"
+              onclick="togglePassword()"
+            >
+              <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>
+              </svg>
+            </button>
+          </div>
+          <a class="forgot-link" href="forgot-password.html">Forgot password?</a>
+        </div>
+
+        <button class="login-submit-btn" type="submit">Sign in</button>
+      </form>
+
+      <p class="login-footer">
+        Don't have an account? <a href="signup.html">Sign up</a>
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      icon.innerHTML = isHidden
+        ? `<path d="M3 3l18 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+           <path d="M10.58 10.58A3 3 0 0013.42 13.42M7.37 7.37A9.77 9.77 0 001.5 12s4.5 7.5 10.5 7.5c1.87 0 3.6-.52 5.1-1.4M17.1 17.1A9.77 9.77 0 0022.5 12S18 4.5 12 4.5c-.73 0-1.44.08-2.1.23" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`
+        : `<path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+           <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/>`;
+    }
+  </script>
+</body>
+</html>

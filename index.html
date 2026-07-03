@@ -3,745 +3,526 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Twitter UI Clone</title>
+  <title>X — See what's happening</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Desktop: no scroll — everything fits the viewport */
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e7e9ea;
+    }
+
+    /* ── Page shell ── */
+    .landing-shell {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 100vh;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 48px 72px;
+      gap: 48px;
+      align-items: center;
+    }
+
+    /* ── Left column ── */
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* X logo */
+    .x-logo { width: 44px; height: 44px; }
+
+    /* Avatar group */
+    .avatar-group {
+      display: flex;
+      align-items: center;
+    }
+    .avatar-bubble {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2.5px solid #0f1117;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: #fff;
+      margin-left: -10px;
+      flex-shrink: 0;
+    }
+    .avatar-bubble:first-child { margin-left: 0; }
+    .ab1 { background: #1d9bf0; }
+    .ab2 { background: #7856ff; }
+    .ab3 { background: #f4af3d; }
+    .avatar-group-label {
+      margin-left: 14px;
+      font-size: 0.82rem;
+      color: #71767b;
+      font-weight: 500;
+    }
+
+    /* Headline */
+    .hero-headline {
+      font-size: clamp(2rem, 3.8vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+
+    /* Subtitle */
+    .hero-sub {
+      font-size: 0.98rem;
+      line-height: 1.7;
+      color: #71767b;
+      max-width: 460px;
+    }
+
+    /* CTA buttons */
+    .cta-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 30px;
+      background: #ffffff;
+      color: #0f1117;
+      border: none;
+      border-radius: 999px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover {
+      background: #d7dbdf;
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 13px 30px;
+      background: transparent;
+      color: #e7e9ea;
+      border: 1.5px solid rgba(231,233,234,0.25);
+      border-radius: 999px;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .btn-ghost:hover {
+      border-color: rgba(231,233,234,0.6);
+      background: rgba(231,233,234,0.06);
+      transform: translateY(-1px);
+    }
+
+    /* Social proof */
+    .social-proof {
+      font-size: 0.82rem;
+      color: #536471;
+    }
+
+    /* Feature tags row */
+    .feature-tags {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+    .feature-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.8rem;
+      color: #536471;
+      font-weight: 500;
+    }
+    .feature-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-blue   { background: #1d9bf0; }
+    .dot-green  { background: #00ba7c; }
+    .dot-yellow { background: #f4af3d; }
+    .dot-pink   { background: #f91880; }
+
+    /* ── Right column ── */
+    .hero-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      height: 100%;
+    }
+
+    /* Ambient glow */
+    .hero-right::before {
+      content: '';
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(29,155,240,0.1) 0%, transparent 68%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    /* Phone wrap + floating cards */
+    .phone-wrap {
+      position: relative;
+      width: 288px;
+      flex-shrink: 0;
+    }
+
+    /* Phone frame */
+    .phone-frame {
+      width: 288px;
+      background: #15202b;
+      border-radius: 36px;
+      border: 2px solid #2f3336;
+      padding: 20px 16px 16px;
+      box-shadow:
+        0 40px 80px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    /* Phone status bar */
+    .phone-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      padding: 0 4px;
+    }
+    .phone-time {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #e7e9ea;
+    }
+    .phone-icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .phone-icon-dot {
+      width: 16px;
+      height: 8px;
+      border-radius: 3px;
+      background: rgba(231,233,234,0.3);
+    }
+
+    /* Tweet cards */
+    .tweet-card {
+      background: #1e2d3d;
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+    .tweet-card:last-child { margin-bottom: 0; }
+
+    .tweet-avi {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.68rem;
+      color: #fff;
+    }
+    .ta1 { background: #1d9bf0; }
+    .ta2 { background: #00ba7c; }
+    .ta3 { background: #f4af3d; }
+    .ta4 { background: #f91880; }
+
+    .tweet-body { flex: 1; min-width: 0; }
+    .tweet-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      overflow: hidden;
+    }
+    .tweet-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #e7e9ea;
+      white-space: nowrap;
+    }
+    .tweet-handle {
+      font-size: 0.7rem;
+      color: #536471;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tweet-text {
+      font-size: 0.73rem;
+      color: #8b98a5;
+      line-height: 1.45;
+      margin-top: 2px;
+    }
+    .tweet-tag {
+      font-size: 0.67rem;
+      font-weight: 700;
+      color: #1d9bf0;
+      background: rgba(29,155,240,0.12);
+      padding: 2px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* Floating notification cards */
+    .floating-card {
+      position: absolute;
+      background: #1e2d3d;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.09);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+      width: 196px;
+      z-index: 1;
+    }
+    .fc-top {
+      top: -16px;
+      right: -88px;
+    }
+    .fc-bottom {
+      bottom: 48px;
+      left: -76px;
+    }
+    .fc-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .fc-blue  { background: rgba(29,155,240,0.18); color: #1d9bf0; }
+    .fc-green { background: rgba(0,186,124,0.18);  color: #00ba7c; }
+    .fc-label { flex: 1; }
+    .fc-title { font-size: 0.76rem; font-weight: 700; color: #e7e9ea; }
+    .fc-sub   { font-size: 0.68rem; color: #536471; margin-top: 1px; }
+
+    /* ── Responsive: tablet ── */
+    @media (max-width: 900px) {
+      html, body { overflow: auto; }
+
+      .landing-shell {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 100vh;
+        padding: 52px 40px 60px;
+        gap: 52px;
+      }
+
+      .hero-right { justify-content: center; }
+
+      .floating-card { display: none; }
+    }
+
+    /* ── Responsive: mobile ── */
+    @media (max-width: 600px) {
+      .landing-shell { padding: 40px 24px 56px; }
+
+      .hero-headline { font-size: 2rem; }
+
+      .cta-row { flex-direction: column; align-items: stretch; }
+      .btn-primary, .btn-ghost { text-align: center; justify-content: center; }
+
+      .phone-wrap, .phone-frame { width: 252px; }
+    }
+  </style>
 </head>
 <body>
-  <div class="page-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M22 5.5a8.5 8.5 0 01-2.4.66 4.2 4.2 0 001.85-2.32 8.4 8.4 0 01-2.66 1.02 4.18 4.18 0 00-7.12 3.81 11.86 11.86 0 01-8.6-4.36 4.18 4.18 0 001.29 5.58 4.16 4.16 0 01-1.9-.53v.05a4.18 4.18 0 003.35 4.1 4.2 4.2 0 01-1.9.07 4.18 4.18 0 003.9 2.9 8.38 8.38 0 01-5.18 1.79A8.5 8.5 0 012 19.5a11.84 11.84 0 006.42 1.88c7.71 0 11.93-6.39 11.93-11.92 0-.18 0-.36-.01-.53A8.5 8.5 0 0022 5.5z" fill="#111827"/>
-          </svg>
-        </div>
-      </div>
-      <nav class="sidebar-nav">
-        <a class="nav-item active" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75H15.75v-6h-7.5v6H3.75A.75.75 0 013 21V9.75z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span>Home</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-          </span>
-          <span>Explore</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8.5c0-3.04-2.46-5.5-5.5-5.5S7 5.46 7 8.5c0 3.22-1.5 4.5-4 5.5 0 0 2.5 0 4.5-1.5 1.25.83 2.75 1.25 4.5 1.25 3.04 0 5.5-2.46 5.5-5.5V8.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M12 21v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Notifications</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5V18a1.5 1.5 0 001.5 1.5H20.5A1.5 1.5 0 0022 18V7.5a1.5 1.5 0 00-1.5-1.5H4.5A1.5 1.5 0 003 7.5z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3 7.5L12 13.5 21 7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span>Messages</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 4.5L19 8.3l-3.5 3.4.8 4.7-4.3-2.3L8.7 16l.8-4.7L6 8.3l4.8-.8L12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span>Grok</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.75 5.75h14.5v12.5H4.75z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.75 8.75h14.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Premium</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3.75h6v16.5H9z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 7.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Lists</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4.5h12v15l-6-4.5L6 19.5v-15z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </span>
-          <span>Bookmarks</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 17.5a4.5 4.5 0 019 0" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 9.5a3 3 0 116 0 3 3 0 01-6 0" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M17.5 5.25h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Communities</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.75 4.75h14.5v14.5H4.75z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.75 8.75h14.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.75 12.75h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Articles</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.75 3.75h-7.5a2.25 2.25 0 00-2.25 2.25v12.75l5.25-3 5.25 3V6a2.25 2.25 0 00-2.25-2.25z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 10.5v4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Verified Orgs</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.25" r="3.25" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.75 20.25v-1.75a5.25 5.25 0 0110.5 0v1.75" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>Profile</span>
-        </a>
-        <a class="nav-item" href="#">
-          <span class="nav-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6 6h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M6 18h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          </span>
-          <span>More</span>
-        </a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="profile-card">
-          <div class="avatar small">G</div>
-          <div>
-            <div class="profile-name">George Vasyagin</div>
-            <div class="profile-handle">@georgesdesign</div>
-          </div>
-          <button class="profile-more" aria-label="More options">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg>
-          </button>
-        </div>
-      </div>
-    </aside>
+  <div class="landing-shell">
 
-    <main class="content">
-      <section class="topnav">
-        <div class="tabs-wrap">
-          <div class="page-tabs" id="pageTabs">
-            <button class="tab active">For You</button>
-            <button class="tab">Following</button>
-            <button class="tab">Design Inspiration</button>
-            <button class="tab">Designers to Follow</button>
-            <button class="tab">News</button>
-            <button class="tab">Tech</button>
-            <button class="tab">Design</button>
-            <button class="tab">Fitness</button>
-          </div>
-          <div class="tab-controls" aria-label="Tab navigation">
-            <button class="tab-toggle tab-toggle-left" id="tabPrev" aria-label="Scroll tabs left">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8l-4 4 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-            <button class="tab-toggle tab-toggle-right" id="tabNext" aria-label="Scroll tabs right">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 8l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
-          </div>
-        </div>
-      </section>
+    <!-- ── Left column: hero content ── -->
+    <section class="hero-left">
 
-      <section class="feed">
-        <article class="card composer-card">
-          <div class="composer-row">
-            <div class="avatar">GV</div>
-            <textarea placeholder="What is happening?"></textarea>
-          </div>
-          <div class="composer-actions">
-            <div class="composer-icons">
-              <button class="icon-button" aria-label="Add photo">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.75 6.25h14.5v11.5H4.75z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4.75 9.25l4.5 5.5 3.75-4.5 5.25 6.75" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add video">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5h13v13h-13z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 8.5l7 4.5-7 4.5V8.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add event">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75h11v2.5h-11z" fill="none" stroke="currentColor" stroke-width="1.7"/><rect x="6.5" y="7.25" width="11" height="12.5" rx="2.25" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.25 10.5h1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M13.75 10.5h1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add emoji">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9 10.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M15 10.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8.5 15.5c1.25 1.25 3.25 1.25 4.5 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add location">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="10.5" r="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add poll">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.75h11v14.5h-11z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 8.75v7.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12.5 8.75v7.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 8.75v7.5" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-              </button>
-              <button class="icon-button" aria-label="Add GIF">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 6.5h13v11h-13z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 9.5h2v5h-2v-2.5h-1v-1h1v-1.5zm5.5 0h-1.5v5h1.5v-1h1v-1.5h-1v-1.5zm3 0h-1.5v5h1.5v-3h1.5v-1.5h-1.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="icon-button" aria-label="More options">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 12h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 18h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 6h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 12h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M7 18h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-              </button>
-            </div>
-            <button class="primary-button">Post</button>
-          </div>
-        </article>
+      <!-- Twitter bird logo -->
+      <svg class="x-logo" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" aria-label="Twitter" role="img">
+        <path d="M23.954 4.569a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723 9.917 9.917 0 01-3.127 1.195 4.92 4.92 0 00-8.384 4.482C7.691 8.094 4.066 6.13 1.64 3.161a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.061a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.937 4.937 0 004.604 3.417 9.868 9.868 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.054 0 13.999-7.496 13.999-13.986 0-.209 0-.42-.015-.63a9.936 9.936 0 002.46-2.548l-.047-.02z"/>
+      </svg>
 
-        <article class="card count-card">
-          <div class="count-label">Show 35 posts</div>
-        </article>
-
-        <article class="card post-card">
-          <div class="post-header">
-            <div class="row gap-sm">
-              <div class="avatar">DB</div>
-              <div>
-                <div class="post-author">David Bend</div>
-                <div class="post-meta">@davidbend998 · 2h</div>
-              </div>
-            </div>
-            <button class="more-button" aria-label="More options">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg>
-            </button>
-          </div>
-          <p class="post-text">Woody Harrelson: “I can’t help but wonder, in spite of all the criticism Bobby Kennedy Jr. received for encouraging us to be somewhat skeptical about these rushed Covid vaccines ...
-            <span class="read-more">What if he was right?”</span>
-          </p>
-          <div class="media-grid">
-            <div class="media-large"></div>
-            <div class="media-column">
-              <div class="media-small tall"></div>
-              <div class="media-row">
-                <div class="media-small"></div>
-                <div class="media-small"></div>
-              </div>
-            </div>
-          </div>
-          <div class="post-actions">
-            <button class="action-button" aria-label="Comments">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              233
-            </button>
-            <button class="action-button action-button--repost" aria-label="Repost">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              2
-            </button>
-            <button class="action-button" aria-label="Likes">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              4
-            </button>
-            <button class="action-button" aria-label="Views">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
-              5
-            </button>
-          </div>
-        </article>
-
-        <!-- Inserted: 20 additional posts similar to the first post -->
-        <!-- Start generated posts -->
-        <article class="card post-card">
-          <div class="post-header">
-            <div class="row gap-sm">
-              <div class="avatar">AL</div>
-              <div>
-                <div class="post-author">Alan Liu</div>
-                <div class="post-meta">@alanliu · 3h</div>
-              </div>
-            </div>
-            <button class="more-button" aria-label="More options">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg>
-            </button>
-          </div>
-          <p class="post-text">Design patterns evolve when constraints change — embrace simplification.</p>
-          <div class="media-grid">
-            <div class="media-large"></div>
-            <div class="media-column">
-              <div class="media-small tall"></div>
-              <div class="media-row">
-                <div class="media-small"></div>
-                <div class="media-small"></div>
-              </div>
-            </div>
-          </div>
-          <div class="post-actions">
-            <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>12</button>
-            <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>3</button>
-            <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>28</button>
-            <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>64</button>
-          </div>
-        </article>
-
-        <!-- generate 19 more posts -->
-
-        <article class="card post-card">
-          <div class="post-header">
-            <div class="row gap-sm">
-              <div class="avatar">MK</div>
-              <div>
-                <div class="post-author">Maya K.</div>
-                <div class="post-meta">@mayak · 1h</div>
-              </div>
-            </div>
-            <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-          </div>
-          <p class="post-text">Quick UI wins: spacing and contrast — tiny changes, big results.</p>
-          <div class="media-grid"><div class="media-large"></div><div class="media-column"><div class="media-small tall"></div><div class="media-row"><div class="media-small"></div><div class="media-small"></div></div></div></div>
-          <div class="post-actions">
-            <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>8</button>
-            <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>5</button>
-            <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>21</button>
-            <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>48</button>
-          </div>
-        </article>
-
-        <!-- Repeat simplified posts (total 20 including the first generated above) -->
-
-        <article class="card post-card"><div class="post-header"><div class="row gap-sm"><div class="avatar">SR</div><div><div class="post-author">S. Rivera</div><div class="post-meta">@srivera · 4h</div></div></div><button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button></div><p class="post-text">Prototype early, iterate faster — get feedback, not perfection.</p><div class="media-grid"><div class="media-large"></div><div class="media-column"><div class="media-small tall"></div><div class="media-row"><div class="media-small"></div><div class="media-small"></div></div></div></div><div class="post-actions"><button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>6</button><button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button><button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>14</button><button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>30</button></div></article>
-
-        <article class="card post-card"><div class="post-header"><div class="row gap-sm"><div class="avatar">TR</div><div><div class="post-author">T. Robinson</div><div class="post-meta">@trobinson · 5h</div></div></div><button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button></div><p class="post-text">Accessibility is not optional — design it in from day one.</p><div class="media-grid"><div class="media-large"></div><div class="media-column"><div class="media-small tall"></div><div class="media-row"><div class="media-small"></div><div class="media-small"></div></div></div></div><div class="post-actions"><button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>3</button><button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button><button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>9</button><button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>18</button></div></article>
-      <!-- additional generated posts to reach a total of 20 inserts -->
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">AB</div>
-            <div>
-              <div class="post-author">A. Brown</div>
-              <div class="post-meta">@abrown · 2h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Small improvements compound — ship often.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>4</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>12</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>22</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">CD</div>
-            <div>
-              <div class="post-author">C. Diaz</div>
-              <div class="post-meta">@cdiaz · 3h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Think in systems, not isolated features.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>9</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>15</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">EF</div>
-            <div>
-              <div class="post-author">E. Foster</div>
-              <div class="post-meta">@efoster · 1h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Edge cases tell the real story.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>3</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>7</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>40</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">GH</div>
-            <div>
-              <div class="post-author">G. Hale</div>
-              <div class="post-meta">@ghale · 6h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Document intent, not just code.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>5</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>12</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">IJ</div>
-            <div>
-              <div class="post-author">I. James</div>
-              <div class="post-meta">@ijames · 2h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Good defaults reduce decision fatigue.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>6</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>9</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">KL</div>
-            <div>
-              <div class="post-author">K. Lee</div>
-              <div class="post-meta">@klee · 7h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Measure what matters — then iterate.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>5</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>30</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>120</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">MN</div>
-            <div>
-              <div class="post-author">M. Nguyen</div>
-              <div class="post-meta">@mnguyen · 45m</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Caching thoughtfully can save hours of work.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>11</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>34</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">OP</div>
-            <div>
-              <div class="post-author">O. Patel</div>
-              <div class="post-meta">@optl · 2h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Onboarding docs should make you redundant.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>7</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>18</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>55</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">QR</div>
-            <div>
-              <div class="post-author">Q. Rios</div>
-              <div class="post-meta">@qrios · 9h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Simplicity is not the absence of complexity.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>4</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>8</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">ST</div>
-            <div>
-              <div class="post-author">S. Thompson</div>
-              <div class="post-meta">@sthompson · 12h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Design for the slowest connection first.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>10</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>39</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">UV</div>
-            <div>
-              <div class="post-author">U. Varela</div>
-              <div class="post-meta">@uvara · 20m</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Automate the tedious, keep the delightful human.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>3</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>6</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">WX</div>
-            <div>
-              <div class="post-author">W. Xu</div>
-              <div class="post-meta">@wxu · 3h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Split big PRs into reviewable chunks.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>6</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>14</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>70</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">YZ</div>
-            <div>
-              <div class="post-author">Y. Zhao</div>
-              <div class="post-meta">@yzhao · 4h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Practice QA early — save production surprises.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>11</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">BA</div>
-            <div>
-              <div class="post-author">B. Ahmed</div>
-              <div class="post-meta">@bahmed · 9h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Telemetry helps you learn what users actually do.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>3</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>8</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>27</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">CB</div>
-            <div>
-              <div class="post-author">C. Barnes</div>
-              <div class="post-meta">@cbarnes · 11h</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Ship prototypes, then validate with customers.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>2</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>16</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>60</button>
-        </div>
-      </article>
-
-      <article class="card post-card">
-        <div class="post-header">
-          <div class="row gap-sm">
-            <div class="avatar">DC</div>
-            <div>
-              <div class="post-author">D. Cruz</div>
-              <div class="post-meta">@dcruz · 2d</div>
-            </div>
-          </div>
-          <button class="more-button" aria-label="More options"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg></button>
-        </div>
-        <p class="post-text">Write tests for the bug you fixed today.</p>
-        <div class="post-actions">
-          <button class="action-button" aria-label="Comments"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>1</button>
-          <button class="action-button action-button--repost" aria-label="Repost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>0</button>
-          <button class="action-button" aria-label="Likes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 0.7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>4</button>
-          <button class="action-button" aria-label="Views"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1.5 12s4.5-7.5 10.5-7.5S22.5 12 22.5 12 18 19.5 12 19.5 1.5 12 1.5 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 10.25a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>13</button>
-        </div>
-      </article>
-    </main>
-
-    <aside class="aside-right">
-      <div class="search-box">
-        <input type="search" placeholder="Search" />
-        <span class="search-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16.5 16.5l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        </span>
+      <!-- Avatar group -->
+      <div class="avatar-group">
+        <div class="avatar-bubble ab1" aria-hidden="true">JW</div>
+        <div class="avatar-bubble ab2" aria-hidden="true">SR</div>
+        <div class="avatar-bubble ab3" aria-hidden="true">ML</div>
+        <span class="avatar-group-label">500M+ people worldwide</span>
       </div>
 
-      <div class="card explore-card">
-        <div class="explore-header">
-          <div class="section-heading">
-            <div class="section-title">Explore</div>
-            <div class="section-status">Beta</div>
-          </div>
-        </div>
+      <!-- Headline -->
+      <h1 class="hero-headline">See what's happening in the world right now.</h1>
 
-        <div class="trend-list">
-          <div class="trend-item">
-            <div class="trend-avatars">
-              <div class="avatar tiny">B</div>
-              <div class="avatar tiny">D</div>
-              <div class="avatar tiny">N</div>
-            </div>
-            <div class="trend-body">
-              <div class="trend-title">Biden: Truth Over Smooth Speeches</div>
-              <div class="trend-subtitle">Trending Now · Politics</div>
-            </div>
-          </div>
+      <!-- Subtitle -->
+      <p class="hero-sub">
+        Join the conversation. Follow your interests, share your thoughts,
+        and stay connected with breaking news, trending topics, and the
+        people who matter most to you.
+      </p>
 
-          <div class="trend-item">
-            <div class="trend-avatars">
-              <div class="avatar tiny">NY</div>
-              <div class="avatar tiny">ET</div>
-              <div class="avatar tiny">OP</div>
-            </div>
-            <div class="trend-body">
-              <div class="trend-title">NY Times Editorial Board Weighs in on Biden’s 2024 Chances</div>
-              <div class="trend-subtitle">Trending Now · Politics</div>
-            </div>
-          </div>
-
-          <div class="trend-item">
-            <div class="trend-avatars">
-              <div class="avatar tiny">TR</div>
-              <div class="avatar tiny">CP</div>
-              <div class="avatar tiny">RM</div>
-            </div>
-            <div class="trend-body">
-              <div class="trend-title">Trump’s 30+ False Claims Ignite Debate Critique</div>
-              <div class="trend-subtitle">Trending Now · Politics</div>
-            </div>
-          </div>
-
-          <div class="trend-item">
-            <div class="trend-avatars">
-              <div class="avatar tiny">AM</div>
-              <div class="avatar tiny">SD</div>
-              <div class="avatar tiny">JK</div>
-            </div>
-            <div class="trend-body">
-              <div class="trend-title">Calls to 25th Amendment Biden Removal Grow</div>
-              <div class="trend-subtitle">Trending Now · Politics</div>
-            </div>
-          </div>
-        </div>
-
-        <button class="show-more">Show More</button>
+      <!-- CTA buttons -->
+      <div class="cta-row">
+        <a href="signup.html" class="btn-primary">Create account</a>
+        <a href="login.html" class="btn-ghost">Sign in</a>
       </div>
 
-      <div class="card follow-card">
-        <div class="section-title">Who to follow</div>
+      <!-- Social proof -->
+      <p class="social-proof">Join over 500 million people already on X. No credit card required.</p>
 
-        <div class="follow-person">
-          <div class="row gap-sm">
-            <div class="avatar small">D</div>
-            <div>
-              <div class="follow-name">Dan Milaunton</div>
-              <div class="follow-meta">@guildwithdan48</div>
-            </div>
-          </div>
-          <button class="follow-button">Follow</button>
-        </div>
-
-        <div class="follow-person">
-          <div class="row gap-sm">
-            <div class="avatar small">A</div>
-            <div>
-              <div class="follow-name">Amilia Gonzales</div>
-              <div class="follow-meta">@amilia7781_y</div>
-            </div>
-          </div>
-          <button class="follow-button">Follow</button>
-        </div>
-
-        <div class="follow-person">
-          <div class="row gap-sm">
-            <div class="avatar small">K</div>
-            <div>
-              <div class="follow-name">Kim Chiushu</div>
-              <div class="follow-meta">@kim_from_theworld</div>
-            </div>
-          </div>
-          <button class="follow-button">Follow</button>
-        </div>
-
-        <button class="show-more">Show More</button>
+      <!-- Feature tags -->
+      <div class="feature-tags">
+        <span class="feature-tag"><span class="feature-dot dot-blue"></span>Trending Now</span>
+        <span class="feature-tag"><span class="feature-dot dot-green"></span>Breaking News</span>
+        <span class="feature-tag"><span class="feature-dot dot-yellow"></span>Real-time</span>
+        <span class="feature-tag"><span class="feature-dot dot-pink"></span>Global</span>
       </div>
-    </aside>
-  </div>
-  <script>
-    const tabs = document.getElementById('pageTabs');
-    const prev = document.getElementById('tabPrev');
-    const next = document.getElementById('tabNext');
 
-    const updateArrowState = () => {
-      if (!tabs || !prev || !next) return;
-      const maxScroll = tabs.scrollWidth - tabs.clientWidth;
-      prev.disabled = tabs.scrollLeft <= 0;
-      next.disabled = tabs.scrollLeft >= maxScroll - 1;
-    };
+    </section>
 
-    if (tabs && prev && next) {
-      prev.addEventListener('click', () => {
-        tabs.scrollBy({ left: -180, behavior: 'smooth' });
-      });
+    <!-- ── Right column: phone mockup ── -->
+    <section class="hero-right" aria-hidden="true">
+      <div class="phone-wrap">
 
-      next.addEventListener('click', () => {
-        tabs.scrollBy({ left: 180, behavior: 'smooth' });
-      });
+        <!-- Floating card: top right -->
+        <div class="floating-card fc-top">
+          <div class="fc-icon fc-blue">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="fc-label">
+            <div class="fc-title">Verified Accounts</div>
+            <div class="fc-sub">Trusted sources only</div>
+          </div>
+        </div>
 
-      tabs.addEventListener('scroll', updateArrowState);
-      window.addEventListener('resize', updateArrowState);
-      updateArrowState();
-    }
-  </script>
+        <!-- Phone frame -->
+        <div class="phone-frame">
+
+          <!-- Status bar -->
+          <div class="phone-status">
+            <span class="phone-time">9:41</span>
+            <div class="phone-icons">
+              <div class="phone-icon-dot"></div>
+              <div class="phone-icon-dot"></div>
+            </div>
+          </div>
+
+          <!-- Tweet 1 -->
+          <div class="tweet-card">
+            <div class="tweet-avi ta1">JW</div>
+            <div class="tweet-body">
+              <div class="tweet-row">
+                <span class="tweet-name">James Wilson</span>
+                <span class="tweet-handle">@jameswilson</span>
+              </div>
+              <div class="tweet-text">Just hit 10K followers — thank you all for the incredible support!</div>
+            </div>
+            <span class="tweet-tag">#Trending</span>
+          </div>
+
+          <!-- Tweet 2 -->
+          <div class="tweet-card">
+            <div class="tweet-avi ta2">SR</div>
+            <div class="tweet-body">
+              <div class="tweet-row">
+                <span class="tweet-name">Sarah Rivera</span>
+                <span class="tweet-handle">@sarahrivera</span>
+              </div>
+              <div class="tweet-text">Markets hit an all-time high amid a record-breaking tech surge.</div>
+            </div>
+            <span class="tweet-tag">#News</span>
+          </div>
+
+          <!-- Tweet 3 -->
+          <div class="tweet-card">
+            <div class="tweet-avi ta3">ML</div>
+            <div class="tweet-body">
+              <div class="tweet-row">
+                <span class="tweet-name">Marcus Lee</span>
+                <span class="tweet-handle">@marcuslee</span>
+              </div>
+              <div class="tweet-text">The future of AI is here — and it's more exciting than we imagined.</div>
+            </div>
+            <span class="tweet-tag">#AI</span>
+          </div>
+
+          <!-- Tweet 4 -->
+          <div class="tweet-card">
+            <div class="tweet-avi ta4">EP</div>
+            <div class="tweet-body">
+              <div class="tweet-row">
+                <span class="tweet-name">Elena Park</span>
+                <span class="tweet-handle">@elenapark</span>
+              </div>
+              <div class="tweet-text">Live coverage starting in 5 minutes. Don't miss it!</div>
+            </div>
+            <span class="tweet-tag">#Live</span>
+          </div>
+
+        </div><!-- /phone-frame -->
+
+        <!-- Floating card: bottom left -->
+        <div class="floating-card fc-bottom">
+          <div class="fc-icon fc-green">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="fc-label">
+            <div class="fc-title">Real-time Feed</div>
+            <div class="fc-sub">Updates every second</div>
+          </div>
+        </div>
+
+      </div><!-- /phone-wrap -->
+    </section>
+
+  </div><!-- /landing-shell -->
 </body>
 </html>
