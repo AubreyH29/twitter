@@ -1,9 +1,43 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 import './AuthPanel.css'
 
 export default function Login() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
+
   const [showPw, setShowPw] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    const form = e.target
+    const identifier = form.identifier.value.trim()
+    const password = form.password.value
+
+    const e2 = {}
+    if (!identifier) e2.identifier = 'Email or username is required.'
+    if (!password) e2.password = 'Password is required.'
+    if (Object.keys(e2).length > 0) { setErrors(e2); return }
+
+    setErrors({})
+    setServerError('')
+    setSubmitting(true)
+
+    try {
+      const { token, user } = await api.post('/auth/login', { identifier, password })
+      login(token, user)
+      navigate('/feed')
+    } catch (err) {
+      setServerError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div className="auth-bg">
@@ -33,38 +67,28 @@ export default function Login() {
             <p>Enter your credentials to continue.</p>
           </div>
 
-          <div className="oauth-group">
-            <button className="oauth-button" type="button">
-              <GoogleIcon />
-              Continue with Google
-            </button>
-            <button className="oauth-button" type="button">
-              <AppleIcon />
-              Continue with Apple
-            </button>
-          </div>
+          {serverError && <div className="server-error" role="alert">{serverError}</div>}
 
-          <div className="divider">or</div>
-
-          <form className="auth-form" onSubmit={e => e.preventDefault()}>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="field-group">
-              <label className="field-label" htmlFor="email">Email or username</label>
+              <label className="field-label" htmlFor="identifier">Email or username</label>
               <input
-                className="field-input"
-                id="email"
+                className={`field-input${errors.identifier ? ' error' : ''}`}
+                id="identifier"
                 type="text"
-                name="email"
-                placeholder="you@example.com"
+                name="identifier"
+                placeholder="you@example.com or @handle"
                 autoComplete="username"
                 required
               />
+              {errors.identifier && <span className="field-error">{errors.identifier}</span>}
             </div>
 
             <div className="field-group">
               <label className="field-label" htmlFor="password">Password</label>
               <div className="field-input-wrap">
                 <input
-                  className="field-input"
+                  className={`field-input${errors.password ? ' error' : ''}`}
                   id="password"
                   type={showPw ? 'text' : 'password'}
                   name="password"
@@ -81,10 +105,13 @@ export default function Login() {
                   {showPw ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
-              <a className="forgot-link" href="#">Forgot password?</a>
+              {errors.password && <span className="field-error">{errors.password}</span>}
+              <Link className="forgot-link" to="/forgot-password">Forgot password?</Link>
             </div>
 
-            <button className="submit-btn" type="submit">Sign in</button>
+            <button className="submit-btn" type="submit" disabled={submitting}>
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </button>
           </form>
 
           <p className="auth-footer">
@@ -93,26 +120,6 @@ export default function Login() {
         </div>
       </div>
     </div>
-  )
-}
-
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-    </svg>
-  )
-}
-
-function AppleIcon() {
-  return (
-    <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M13.53 9.49c-.02-2.04 1.67-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.08.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.63.8-3.33 2.02-1.43 2.47-.37 6.12 1.02 8.12.68.98 1.48 2.08 2.54 2.04 1.02-.04 1.4-.66 2.63-.66 1.22 0 1.57.66 2.64.64 1.1-.02 1.79-1 2.46-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.13-3.27z" fill="#111827"/>
-      <path d="M11.52 3.18c.56-.68.94-1.63.84-2.58-.81.04-1.8.54-2.38 1.21-.52.6-.98 1.57-.86 2.49.9.07 1.82-.46 2.4-1.12z" fill="#111827"/>
-    </svg>
   )
 }
 
@@ -133,3 +140,5 @@ function EyeOffIcon() {
     </svg>
   )
 }
+
+

@@ -1,40 +1,73 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 import './AuthPanel.css'
 
 export default function Signup() {
+  const navigate = useNavigate()
+  const { login } = useAuth()
+
   const [showPw, setShowPw] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [pwValue, setPwValue] = useState('')
-  const [emailError, setEmailError] = useState('')
-  const [confirmError, setConfirmError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const [errors, setErrors] = useState({})
+  const [serverError, setServerError] = useState('')
 
   const strength = calcStrength(pwValue)
 
-  function handleSubmit(e) {
+  function validate(fields) {
+    const e = {}
+    if (!fields.firstName.trim()) e.firstName = 'First name is required.'
+    if (!fields.lastName.trim()) e.lastName = 'Last name is required.'
+    if (!fields.username.trim()) e.username = 'Username is required.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) e.email = 'Please enter a valid email address.'
+    if (fields.password.length < 8) e.password = 'Password must be at least 8 characters.'
+    if (fields.password !== fields.confirmPassword) e.confirmPassword = 'Passwords do not match.'
+    return e
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     const form = e.target
-    let valid = true
-
-    const email = form.email.value
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError('Please enter a valid email address.')
-      valid = false
-    } else {
-      setEmailError('')
+    const fields = {
+      firstName: form.firstName.value,
+      lastName: form.lastName.value,
+      username: form.username.value,
+      email: form.email.value,
+      password: form.password.value,
+      confirmPassword: form.confirmPassword.value,
     }
 
-    const pw = form.password.value
-    const cpw = form.confirmPassword.value
-    if (pw !== cpw) {
-      setConfirmError('Passwords do not match.')
-      valid = false
-    } else {
-      setConfirmError('')
+    const validationErrors = validate(fields)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
     }
+    setErrors({})
+    setServerError('')
+    setSubmitting(true)
 
-    if (valid) {
-      // navigate('/feed') after real auth
+    try {
+      const { token, user } = await api.post('/auth/register', {
+        firstName: fields.firstName,
+        lastName: fields.lastName,
+        username: fields.username,
+        email: fields.email,
+        password: fields.password,
+      })
+      login(token, user)
+      navigate('/feed')
+    } catch (err) {
+      if (err.field) {
+        setErrors({ [err.field]: err.message })
+      } else {
+        setServerError(err.message)
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -78,45 +111,39 @@ export default function Signup() {
             <p>It's free and only takes a minute.</p>
           </div>
 
-          <div className="oauth-group">
-            <button className="oauth-button" type="button">
-              <GoogleIcon /> Sign up with Google
-            </button>
-            <button className="oauth-button" type="button">
-              <AppleIcon /> Sign up with Apple
-            </button>
-          </div>
+          {serverError && <div className="server-error" role="alert">{serverError}</div>}
 
-          <div className="divider">or</div>
-
-          <form className="auth-form" onSubmit={handleSubmit}>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="field-row">
               <div className="field-group">
                 <label className="field-label" htmlFor="firstName">First name</label>
-                <input className="field-input" id="firstName" type="text" name="firstName" placeholder="Jane" autoComplete="given-name" required />
+                <input className={`field-input${errors.firstName ? ' error' : ''}`} id="firstName" type="text" name="firstName" placeholder="Jane" autoComplete="given-name" required />
+                {errors.firstName && <span className="field-error">{errors.firstName}</span>}
               </div>
               <div className="field-group">
                 <label className="field-label" htmlFor="lastName">Last name</label>
-                <input className="field-input" id="lastName" type="text" name="lastName" placeholder="Doe" autoComplete="family-name" required />
+                <input className={`field-input${errors.lastName ? ' error' : ''}`} id="lastName" type="text" name="lastName" placeholder="Doe" autoComplete="family-name" required />
+                {errors.lastName && <span className="field-error">{errors.lastName}</span>}
               </div>
             </div>
 
             <div className="field-group">
               <label className="field-label" htmlFor="username">Username</label>
-              <input className="field-input" id="username" type="text" name="username" placeholder="@janedoe" autoComplete="username" required />
+              <input className={`field-input${errors.username ? ' error' : ''}`} id="username" type="text" name="username" placeholder="@janedoe" autoComplete="username" required />
+              {errors.username && <span className="field-error">{errors.username}</span>}
             </div>
 
             <div className="field-group">
               <label className="field-label" htmlFor="email">Email address</label>
-              <input className={`field-input${emailError ? ' error' : ''}`} id="email" type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
-              {emailError && <span className="field-error">{emailError}</span>}
+              <input className={`field-input${errors.email ? ' error' : ''}`} id="email" type="email" name="email" placeholder="you@example.com" autoComplete="email" required />
+              {errors.email && <span className="field-error">{errors.email}</span>}
             </div>
 
             <div className="field-group">
               <label className="field-label" htmlFor="password">Password</label>
               <div className="field-input-wrap">
                 <input
-                  className="field-input"
+                  className={`field-input${errors.password ? ' error' : ''}`}
                   id="password"
                   type={showPw ? 'text' : 'password'}
                   name="password"
@@ -130,6 +157,7 @@ export default function Signup() {
                   {showPw ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
+              {errors.password && <span className="field-error">{errors.password}</span>}
               <StrengthBar score={strength.score} label={strength.label} color={strength.color} />
             </div>
 
@@ -137,7 +165,7 @@ export default function Signup() {
               <label className="field-label" htmlFor="confirmPassword">Confirm password</label>
               <div className="field-input-wrap">
                 <input
-                  className={`field-input${confirmError ? ' error' : ''}`}
+                  className={`field-input${errors.confirmPassword ? ' error' : ''}`}
                   id="confirmPassword"
                   type={showConfirm ? 'text' : 'password'}
                   name="confirmPassword"
@@ -149,7 +177,7 @@ export default function Signup() {
                   {showConfirm ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
-              {confirmError && <span className="field-error">{confirmError}</span>}
+              {errors.confirmPassword && <span className="field-error">{errors.confirmPassword}</span>}
             </div>
 
             <div className="terms-row">
@@ -159,7 +187,9 @@ export default function Signup() {
               </label>
             </div>
 
-            <button className="submit-btn" type="submit">Create account</button>
+            <button className="submit-btn" type="submit" disabled={submitting}>
+              {submitting ? 'Creating account…' : 'Create account'}
+            </button>
           </form>
 
           <p className="auth-footer">
@@ -197,26 +227,6 @@ function StrengthBar({ score, label, color }) {
   )
 }
 
-function GoogleIcon() {
-  return (
-    <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
-      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-    </svg>
-  )
-}
-
-function AppleIcon() {
-  return (
-    <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <path d="M13.53 9.49c-.02-2.04 1.67-3.02 1.74-3.07-.95-1.38-2.42-1.57-2.94-1.59-1.25-.13-2.45.74-3.08.74-.64 0-1.62-.72-2.67-.7-1.37.02-2.63.8-3.33 2.02-1.43 2.47-.37 6.12 1.02 8.12.68.98 1.48 2.08 2.54 2.04 1.02-.04 1.4-.66 2.63-.66 1.22 0 1.57.66 2.64.64 1.1-.02 1.79-1 2.46-1.98.78-1.13 1.1-2.23 1.12-2.29-.02-.01-2.14-.82-2.13-3.27z" fill="#111827"/>
-      <path d="M11.52 3.18c.56-.68.94-1.63.84-2.58-.81.04-1.8.54-2.38 1.21-.52.6-.98 1.57-.86 2.49.9.07 1.82-.46 2.4-1.12z" fill="#111827"/>
-    </svg>
-  )
-}
-
 function EyeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none">
@@ -234,3 +244,5 @@ function EyeOffIcon() {
     </svg>
   )
 }
+
+

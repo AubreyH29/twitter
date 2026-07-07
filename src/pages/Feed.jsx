@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import './Feed.css'
 
 const NAV_ITEMS = [
@@ -55,10 +56,48 @@ const FOLLOW = [
 ]
 
 export default function Feed() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState(0)
   const tabsRef = useRef(null)
   const [canPrev, setCanPrev] = useState(false)
   const [canNext, setCanNext] = useState(true)
+
+  // Infinite scroll
+  const PAGE_SIZE = 8
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const sentinelRef = useRef(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && visibleCount < POSTS.length) {
+          setLoadingMore(true)
+          // Simulate async load — in production replace with a real API call
+          setTimeout(() => {
+            setVisibleCount(c => Math.min(c + PAGE_SIZE, POSTS.length))
+            setLoadingMore(false)
+          }, 600)
+        }
+      },
+      { threshold: 0.1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [visibleCount])
+
+  function handleLogout() {
+    logout()
+    navigate('/')
+  }
+
+  // Derive display values from session
+  const displayName = user ? `${user.firstName} ${user.lastName}` : ''
+  const handle = user ? `@${user.username}` : ''
+  const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?'
 
   const updateArrows = () => {
     const el = tabsRef.current
@@ -100,13 +139,17 @@ export default function Feed() {
         </nav>
         <div className="sidebar-footer">
           <div className="profile-card">
-            <div className="avatar small">G</div>
+            <div className="avatar small">{initials}</div>
             <div>
-              <div className="profile-name">George Vasyagin</div>
-              <div className="profile-handle">@georgesdesign</div>
+              <div className="profile-name">{displayName}</div>
+              <div className="profile-handle">{handle}</div>
             </div>
-            <button className="profile-more" aria-label="More options">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.25"/><circle cx="12" cy="12" r="1.25"/><circle cx="19" cy="12" r="1.25"/></svg>
+            <button className="profile-more logout-btn" aria-label="Log out" title="Log out" onClick={handleLogout}>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M16 17l5-5-5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </div>
         </div>
@@ -152,7 +195,7 @@ export default function Feed() {
           {/* Composer */}
           <article className="card composer-card">
             <div className="composer-row">
-              <div className="avatar">GV</div>
+              <div className="avatar">{initials}</div>
               <textarea placeholder="What is happening?"></textarea>
             </div>
             <div className="composer-actions">
@@ -176,9 +219,17 @@ export default function Feed() {
             <div className="count-label">Show 35 posts</div>
           </article>
 
-          {POSTS.map((p, i) => (
+          {POSTS.slice(0, visibleCount).map((p, i) => (
             <PostCard key={i} {...p} />
           ))}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} className="feed-sentinel">
+            {loadingMore && <span className="feed-loading">Loading more posts…</span>}
+            {!loadingMore && visibleCount >= POSTS.length && (
+              <span className="feed-loading">You're all caught up</span>
+            )}
+          </div>
         </section>
       </main>
 
@@ -216,9 +267,9 @@ export default function Feed() {
           <div className="section-title">Who to follow</div>
           {FOLLOW.map((f, i) => (
             <div key={i} className="follow-person">
-              <div className="row gap-sm">
+              <div className="follow-person-info">
                 <div className="avatar small">{f.initials}</div>
-                <div>
+                <div className="follow-person-text">
                   <div className="follow-name">{f.name}</div>
                   <div className="follow-meta">{f.handle}</div>
                 </div>

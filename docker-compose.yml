@@ -17,15 +17,27 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+
   web:
     build: .
     ports:
       - "3000:80"
     restart: unless-stopped
-    env_file: .env
     depends_on:
-      db:
-        condition: service_healthy
+      - api
 
 volumes:
   postgres_data:

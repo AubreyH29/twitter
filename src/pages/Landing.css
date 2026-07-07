@@ -1,14 +1,9 @@
-html, body, #root {
-  height: 100%;
-  overflow: hidden;
+.landing-shell {
   background: #0f1117;
   color: #e7e9ea;
-}
-
-.landing-shell {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  height: 100vh;
+  min-height: 100vh;
   max-width: 1280px;
   margin: 0 auto;
   padding: 48px 72px;
@@ -164,9 +159,8 @@ html, body, #root {
 .fc-sub   { font-size: 0.68rem; color: #536471; margin-top: 1px; }
 
 @media (max-width: 900px) {
-  html, body, #root { overflow: auto; }
   .landing-shell {
-    grid-template-columns: 1fr; height: auto; min-height: 100vh;
+    grid-template-columns: 1fr; min-height: 100vh;
     padding: 52px 40px 60px; gap: 52px;
   }
   .hero-right { justify-content: center; }
