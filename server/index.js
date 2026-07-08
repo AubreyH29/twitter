@@ -16,6 +16,11 @@ app.use(cors({
 }))
 app.use(express.json())
 
+// ─── Static uploads ──────────────────────────────────────────────────────────
+const uploadsDir = path.join(__dirname, 'uploads')
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+app.use('/api/uploads', express.static(uploadsDir))
+
 // ─── Run migrations on startup ───────────────────────────────────────────────
 async function runMigrations() {
   const migrationsDir = path.join(__dirname, 'migrations')

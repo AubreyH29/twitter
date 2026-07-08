@@ -1,9 +1,37 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
+const multer = require('multer')
+const path = require('path')
+const crypto = require('crypto')
+const fs = require('fs')
 const pool = require('../db')
 
 const router = express.Router()
 const JWT_SECRET = process.env.JWT_SECRET
+
+// ─── Upload storage ───────────────────────────────────────────────────────────
+const uploadsDir = path.join(__dirname, '../uploads')
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true })
+
+const storage = multer.diskStorage({
+  destination: uploadsDir,
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase()
+    const name = crypto.randomBytes(16).toString('hex')
+    cb(null, `${name}${ext}`)
+  },
+})
+
+const fileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime']
+  cb(null, allowed.includes(file.mimetype))
+}
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 50 * 1024 * 1024, files: 4 },
+})
 
 // ─── auth middleware ──────────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
@@ -20,7 +48,6 @@ function requireAuth(req, res, next) {
 }
 
 // ─── GET /api/posts?page=1 ────────────────────────────────────────────────────
-// Returns paginated posts (newest first) with author info and social counts
 router.get('/', requireAuth, async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page) || 1)
   const limit = 20
@@ -30,7 +57,7 @@ router.get('/', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-         p.id, p.body, p.created_at,
+         p.id, p.body, p.media_urls, p.location, p.created_at,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
@@ -54,7 +81,6 @@ router.get('/', requireAuth, async (req, res) => {
 })
 
 // ─── GET /api/posts/user/:username ───────────────────────────────────────────
-// Returns posts for a specific user (profile feed)
 router.get('/user/:username', requireAuth, async (req, res) => {
   const { username } = req.params
   const page = Math.max(1, parseInt(req.query.page) || 1)
@@ -74,7 +100,7 @@ router.get('/user/:username', requireAuth, async (req, res) => {
 
     const result = await pool.query(
       `SELECT
-         p.id, p.body, p.created_at,
+         p.id, p.body, p.media_urls, p.location, p.created_at,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
@@ -124,25 +150,27 @@ router.get('/user/:username', requireAuth, async (req, res) => {
 })
 
 // ─── POST /api/posts ──────────────────────────────────────────────────────────
-router.post('/', requireAuth, async (req, res) => {
-  const { body } = req.body
-  if (!body || body.trim().length === 0) {
-    return res.status(400).json({ error: 'Post body is required.' })
+router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
+  const body     = (req.body.body || '').trim()
+  const location = (req.body.location || '').trim().slice(0, 100)
+  const mediaUrls = (req.files || []).map(f => `/api/uploads/${f.filename}`)
+
+  if (!body && mediaUrls.length === 0) {
+    return res.status(400).json({ error: 'Post must have text or media.' })
   }
-  if (body.trim().length > 280) {
+  if (body.length > 280) {
     return res.status(400).json({ error: 'Post cannot exceed 280 characters.' })
   }
 
   try {
     const result = await pool.query(
-      `INSERT INTO posts (user_id, body)
-       VALUES ($1, $2)
-       RETURNING id, body, created_at`,
-      [req.user.userId, body.trim()]
+      `INSERT INTO posts (user_id, body, media_urls, location)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, body, media_urls, location, created_at`,
+      [req.user.userId, body, mediaUrls, location]
     )
     const post = result.rows[0]
 
-    // Fetch author info to return full post object
     const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.userId])
     const u = userRes.rows[0]
 
@@ -150,11 +178,18 @@ router.post('/', requireAuth, async (req, res) => {
       post: {
         id: post.id,
         body: post.body,
+        media_urls: post.media_urls || [],
+        location: post.location || '',
         created_at: post.created_at,
         user_id: u.id,
         first_name: u.first_name,
         last_name: u.last_name,
         username: u.username,
+        like_count: 0,
+        repost_count: 0,
+        liked_by_me: false,
+        reposted_by_me: false,
+        bookmarked_by_me: false,
       }
     })
   } catch (err) {
@@ -164,3 +199,4 @@ router.post('/', requireAuth, async (req, res) => {
 })
 
 module.exports = router
+

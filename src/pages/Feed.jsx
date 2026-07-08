@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
+import Composer from '../components/Composer'
 import WhoToFollow from '../components/WhoToFollow'
 import './Feed.css'
 
@@ -28,10 +28,6 @@ export default function Feed() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(true)
   const sentinelRef = useRef(null)
-
-  const [composerText, setComposerText] = useState('')
-  const [posting, setPosting] = useState(false)
-  const [postError, setPostError] = useState('')
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?'
 
@@ -80,24 +76,6 @@ export default function Feed() {
     return () => { el.removeEventListener('scroll', updateArrows); window.removeEventListener('resize', updateArrows) }
   }, [])
 
-  async function handlePost(e) {
-    e.preventDefault()
-    const text = composerText.trim()
-    if (!text) return
-    if (text.length > 280) { setPostError('Post cannot exceed 280 characters.'); return }
-    setPostError('')
-    setPosting(true)
-    try {
-      const data = await api.post('/posts', { body: text })
-      setPosts(prev => [data.post, ...prev])
-      setComposerText('')
-    } catch (err) {
-      setPostError(err.message)
-    } finally {
-      setPosting(false)
-    }
-  }
-
   return (
     <div className="page-shell">
       <Sidebar activeItem="Home" />
@@ -125,41 +103,7 @@ export default function Feed() {
         </div>
 
         <section className="feed">
-          <article className="card composer-card">
-            <form onSubmit={handlePost}>
-              <div className="composer-row">
-                <div className="avatar">{initials}</div>
-                <textarea
-                  placeholder="What is happening?"
-                  value={composerText}
-                  onChange={e => { setComposerText(e.target.value); setPostError('') }}
-                  maxLength={280}
-                />
-              </div>
-              {postError && <div className="composer-error">{postError}</div>}
-              <div className="composer-actions">
-                <div className="composer-icons">
-                  {[
-                    ['Add photo', <><path d="M4.75 6.25h14.5v11.5H4.75z" fill="none" stroke="currentColor" strokeWidth="1.7" /><path d="M4.75 9.25l4.5 5.5 3.75-4.5 5.25 6.75" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></>],
-                    ['Add emoji', <><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.7" /><path d="M9 10.5h.01M15 10.5h.01M8.5 15.5c1.25 1.25 3.25 1.25 4.5 0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></>],
-                    ['Add location', <><path d="M12 21s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /><circle cx="12" cy="10.5" r="1.5" fill="none" stroke="currentColor" strokeWidth="1.7" /></>],
-                  ].map(([label, icon], i) => (
-                    <button key={i} type="button" className="icon-button" aria-label={label}>
-                      <svg viewBox="0 0 24 24" aria-hidden="true">{icon}</svg>
-                    </button>
-                  ))}
-                  {composerText.length > 0 && (
-                    <span className={`char-count${composerText.length > 260 ? ' char-warn' : ''}`}>
-                      {280 - composerText.length}
-                    </span>
-                  )}
-                </div>
-                <button className="primary-button" type="submit" disabled={posting || composerText.trim().length === 0}>
-                  {posting ? 'Posting…' : 'Post'}
-                </button>
-              </div>
-            </form>
-          </article>
+          <Composer initials={initials} onPost={(post) => setPosts(prev => [post, ...prev])} />
 
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 

@@ -10,16 +10,23 @@ function timeAgo(dateStr) {
   return `${Math.floor(diff / 86400)}d`
 }
 
+function isVideo(url) {
+  return /\.(mp4|webm|mov|quicktime)(\?|$)/i.test(url)
+}
+
 export default function PostCard({ post }) {
   const [liked, setLiked] = useState(post.liked_by_me || false)
   const [likeCount, setLikeCount] = useState(post.like_count || 0)
   const [reposted, setReposted] = useState(post.reposted_by_me || false)
   const [repostCount, setRepostCount] = useState(post.repost_count || 0)
   const [bookmarked, setBookmarked] = useState(post.bookmarked_by_me || false)
+  const [lightbox, setLightbox] = useState(null) // url or null
 
   const authorInitials = `${post.first_name[0]}${post.last_name[0]}`.toUpperCase()
   const authorName = `${post.first_name} ${post.last_name}`
   const authorHandle = `@${post.username}`
+  const media = post.media_urls || []
+  const mediaCount = media.length
 
   async function handleLike() {
     const next = !liked
@@ -59,73 +66,119 @@ export default function PostCard({ post }) {
   }
 
   return (
-    <article className="card post-card">
-      <div className="post-header">
-        <div className="row gap-sm">
-          <Link to={`/profile/${post.username}`} className="avatar avatar-link">{authorInitials}</Link>
-          <div>
-            <Link to={`/profile/${post.username}`} className="post-author-link">
-              <div className="post-author">{authorName}</div>
-            </Link>
-            <div className="post-meta">{authorHandle} · {timeAgo(post.created_at)}</div>
+    <>
+      <article className="card post-card">
+        <div className="post-header">
+          <div className="row gap-sm">
+            <Link to={`/profile/${post.username}`} className="avatar avatar-link">{authorInitials}</Link>
+            <div>
+              <Link to={`/profile/${post.username}`} className="post-author-link">
+                <div className="post-author">{authorName}</div>
+              </Link>
+              <div className="post-meta">{authorHandle} · {timeAgo(post.created_at)}</div>
+            </div>
           </div>
+          <button className="more-button" aria-label="More options">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="5" cy="12" r="1.25" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.25" fill="currentColor" />
+              <circle cx="19" cy="12" r="1.25" fill="currentColor" />
+            </svg>
+          </button>
         </div>
-        <button className="more-button" aria-label="More options">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="5" cy="12" r="1.25" fill="currentColor" />
-            <circle cx="12" cy="12" r="1.25" fill="currentColor" />
-            <circle cx="19" cy="12" r="1.25" fill="currentColor" />
-          </svg>
-        </button>
-      </div>
 
-      <p className="post-text">{post.body}</p>
+        {post.body && <p className="post-text">{post.body}</p>}
 
-      <div className="post-actions">
-        <button className="action-button" aria-label="Comments">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          0
-        </button>
+        {/* Media grid */}
+        {mediaCount > 0 && (
+          <div className={`post-media-grid post-media-${mediaCount}`}>
+            {media.map((url, i) => (
+              <div key={i} className="post-media-item" onClick={() => !isVideo(url) && setLightbox(url)}>
+                {isVideo(url) ? (
+                  <video src={url} className="post-media-thumb" controls onClick={e => e.stopPropagation()} />
+                ) : (
+                  <img src={url} alt="" className="post-media-thumb" loading="lazy" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
-        <button className={`action-button${reposted ? ' reposted' : ''}`} aria-label="Repost" onClick={handleRepost}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          {repostCount}
-        </button>
+        {/* Location tag */}
+        {post.location && (
+          <div className="post-location">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 21s-6-5.5-6-10a6 6 0 0112 0c0 4.5-6 10-6 10z" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="10.5" r="1.4" stroke="currentColor" strokeWidth="1.6"/>
+            </svg>
+            {post.location}
+          </div>
+        )}
 
-        <button className={`action-button${liked ? ' liked' : ''}`} aria-label="Like" onClick={handleLike}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 .7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z"
-              fill={liked ? '#f91880' : 'none'}
-              stroke={liked ? '#f91880' : 'currentColor'}
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          {likeCount}
-        </button>
+        <div className="post-actions">
+          <button className="action-button" aria-label="Comments">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            0
+          </button>
 
-        <button className={`action-button${bookmarked ? ' bookmarked' : ''}`} aria-label="Bookmark" onClick={handleBookmark}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M6 4.5h12v15l-6-4.5L6 19.5v-15z"
-              fill={bookmarked ? '#2563eb' : 'none'}
-              stroke={bookmarked ? '#2563eb' : 'currentColor'}
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </div>
-    </article>
+          <button className={`action-button${reposted ? ' reposted' : ''}`} aria-label="Repost" onClick={handleRepost}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            {repostCount}
+          </button>
+
+          <button className={`action-button${liked ? ' liked' : ''}`} aria-label="Like" onClick={handleLike}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 20.25s-6.75-4.27-9-8.25C1.5 9.82 4.1 6 8 6c1.63 0 3.3.8 4 2 .7-1.2 2.37-2 4-2 3.9 0 6.5 3.82 5 6.75-2.25 3.98-9 8.25-9 8.25z"
+                fill={liked ? '#f91880' : 'none'}
+                stroke={liked ? '#f91880' : 'currentColor'}
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {likeCount}
+          </button>
+
+          <button className={`action-button${bookmarked ? ' bookmarked' : ''}`} aria-label="Bookmark" onClick={handleBookmark}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M6 4.5h12v15l-6-4.5L6 19.5v-15z"
+                fill={bookmarked ? '#2563eb' : 'none'}
+                stroke={bookmarked ? '#2563eb' : 'currentColor'}
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </article>
+
+      {/* Image lightbox */}
+      {lightbox && (
+        <div className="post-lightbox" onClick={() => setLightbox(null)}>
+          <button className="post-lightbox-close" aria-label="Close" onClick={() => setLightbox(null)}>
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+          <img
+            src={lightbox}
+            alt=""
+            className="post-lightbox-img"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   )
 }
+

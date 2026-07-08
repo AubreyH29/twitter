@@ -278,7 +278,7 @@ router.get('/bookmarks', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-         p.id, p.body, p.created_at,
+         p.id, p.body, p.media_urls, p.location, p.created_at,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
@@ -399,7 +399,7 @@ router.get('/likes/:username', requireAuth, async (req, res) => {
 
     const result = await pool.query(
       `SELECT
-         p.id, p.body, p.created_at,
+         p.id, p.body, p.media_urls, p.location, p.created_at,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l2.user_id)::int AS like_count,
          COUNT(DISTINCT rp.user_id)::int AS repost_count,
