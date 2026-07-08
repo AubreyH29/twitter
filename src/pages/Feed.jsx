@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
 import Composer from '../components/Composer'
