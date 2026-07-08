@@ -23,6 +23,7 @@ function safeUser(row) {
     lastName: row.last_name,
     username: row.username,
     email: row.email,
+    bio: row.bio || '',
     createdAt: row.created_at,
   }
 }
@@ -180,6 +181,47 @@ router.get('/me', async (req, res) => {
     return res.status(200).json({ user: safeUser(result.rows[0]) })
   } catch {
     return res.status(401).json({ error: 'Invalid or expired token.' })
+  }
+})
+
+// ─── PUT /api/auth/profile ────────────────────────────────────────────────────
+router.put('/profile', async (req, res) => {
+  const authHeader = req.headers.authorization
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized.' })
+  }
+
+  const token = authHeader.slice(7)
+  let payload
+  try {
+    payload = jwt.verify(token, JWT_SECRET)
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired token.' })
+  }
+
+  const { firstName, lastName, bio } = req.body
+
+  if (!firstName || !lastName) {
+    return res.status(400).json({ error: 'First name and last name are required.' })
+  }
+
+  const cleanFirstName = firstName.trim()
+  const cleanLastName  = lastName.trim()
+  const cleanBio       = (bio || '').trim().slice(0, 160)
+
+  try {
+    const result = await pool.query(
+      `UPDATE users
+       SET first_name = $1, last_name = $2, bio = $3
+       WHERE id = $4
+       RETURNING *`,
+      [cleanFirstName, cleanLastName, cleanBio, payload.userId]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'User not found.' })
+    return res.json({ user: safeUser(result.rows[0]) })
+  } catch (err) {
+    console.error('Profile update error:', err)
+    return res.status(500).json({ error: 'Failed to update profile.' })
   }
 })
 
