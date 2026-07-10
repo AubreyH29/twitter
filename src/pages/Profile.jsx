@@ -305,7 +305,13 @@ export default function Profile() {
                 </div>
               )}
 
-              {activePosts.map(p => <PostCard key={p.id} post={p} />)}
+              {activePosts.map(p => (
+                <PostCard
+                  key={p.id}
+                  post={p}
+                  onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
+                />
+              ))}
 
               {activeTab === 0 && (
                 <div ref={sentinelRef} className="feed-sentinel">

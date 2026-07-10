@@ -109,7 +109,11 @@ export default function Feed() {
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 
           {posts.map((p) => (
-            <PostCard key={p.id} post={p} />
+            <PostCard
+              key={p.id}
+              post={p}
+              onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
+            />
           ))}
 
           <div ref={sentinelRef} className="feed-sentinel">

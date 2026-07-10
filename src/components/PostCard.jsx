@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -14,13 +15,40 @@ function isVideo(url) {
   return /\.(mp4|webm|mov|quicktime)(\?|$)/i.test(url)
 }
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onDelete }) {
+  const { user } = useAuth()
   const [liked, setLiked] = useState(post.liked_by_me || false)
   const [likeCount, setLikeCount] = useState(post.like_count || 0)
   const [reposted, setReposted] = useState(post.reposted_by_me || false)
   const [repostCount, setRepostCount] = useState(post.repost_count || 0)
   const [bookmarked, setBookmarked] = useState(post.bookmarked_by_me || false)
   const [lightbox, setLightbox] = useState(null) // url or null
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const menuRef = useRef(null)
+
+  const isOwnPost = user && user.id === post.user_id
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [menuOpen])
+
+  async function handleDelete() {
+    setDeleting(true)
+    setMenuOpen(false)
+    try {
+      await api.del(`/posts/${post.id}`)
+      onDelete?.(post.id)
+    } catch {
+      setDeleting(false)
+    }
+  }
 
   const authorInitials = `${post.first_name[0]}${post.last_name[0]}`.toUpperCase()
   const authorName = `${post.first_name} ${post.last_name}`
@@ -78,13 +106,35 @@ export default function PostCard({ post }) {
               <div className="post-meta">{authorHandle} · {timeAgo(post.created_at)}</div>
             </div>
           </div>
-          <button className="more-button" aria-label="More options">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.25" fill="currentColor" />
-              <circle cx="12" cy="12" r="1.25" fill="currentColor" />
-              <circle cx="19" cy="12" r="1.25" fill="currentColor" />
-            </svg>
-          </button>
+          {isOwnPost && (
+            <div className="more-menu-wrap" ref={menuRef}>
+              <button
+                className="more-button"
+                aria-label="More options"
+                onClick={() => setMenuOpen(o => !o)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1.25" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.25" fill="currentColor" />
+                  <circle cx="19" cy="12" r="1.25" fill="currentColor" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <div className="more-menu">
+                  <button
+                    className="more-menu-item more-menu-item--danger"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="16" height="16">
+                      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {deleting ? 'Deleting…' : 'Delete'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {post.body && <p className="post-text">{post.body}</p>}
