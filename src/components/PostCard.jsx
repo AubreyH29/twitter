@@ -39,7 +39,7 @@ function QuotedPost({ post }) {
   )
 }
 
-export default function PostCard({ post, onQuote }) {
+export default function PostCard({ post, onQuote, onRepostChange }) {
   const [liked, setLiked] = useState(post.liked_by_me || false)
   const [likeCount, setLikeCount] = useState(post.like_count || 0)
   const [reposted, setReposted] = useState(post.reposted_by_me || false)
@@ -74,8 +74,10 @@ export default function PostCard({ post, onQuote }) {
     setReposted(next)
     setRepostCount(c => next ? c + 1 : c - 1)
     try {
-      if (next) await api.post(`/social/repost/${post.id}`)
-      else await api.del(`/social/repost/${post.id}`)
+      const data = next
+        ? await api.post(`/social/repost/${post.id}`)
+        : await api.del(`/social/repost/${post.id}`)
+      onRepostChange?.(post, next, data)
     } catch {
       setReposted(!next)
       setRepostCount(c => next ? c - 1 : c + 1)

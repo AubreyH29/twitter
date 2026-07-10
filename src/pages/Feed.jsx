@@ -65,6 +65,32 @@ export default function Feed() {
     return () => observer.disconnect()
   }, [hasMore, loadingMore, page, loadPosts])
 
+  function handleRepostChange(post, isReposted, data) {
+    if (!user) return
+    if (isReposted) {
+      const repostActivity = {
+        ...post,
+        reposted_by_me: true,
+        repost_count: data?.repost_count ?? post.repost_count,
+        activity_at: data?.activity_at || new Date().toISOString(),
+        reposted_by_id: user.id,
+        reposted_by_first_name: user.firstName,
+        reposted_by_last_name: user.lastName,
+        reposted_by_username: user.username,
+      }
+      setPosts(prev => [
+        repostActivity,
+        ...prev.map(p => p.id === post.id ? { ...p, reposted_by_me: true, repost_count: data?.repost_count ?? p.repost_count } : p)
+          .filter(p => !(p.id === post.id && p.reposted_by_id === user.id))
+      ])
+    } else {
+      setPosts(prev => prev
+        .filter(p => !(p.id === post.id && p.reposted_by_id === user.id))
+        .map(p => p.id === post.id ? { ...p, reposted_by_me: false, repost_count: data?.repost_count ?? p.repost_count } : p)
+      )
+    }
+  }
+
   async function submitQuote(e) {
     e.preventDefault()
     if (!quotePost) return
@@ -138,7 +164,7 @@ export default function Feed() {
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 
           {posts.map((p) => (
-            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} />
+            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onRepostChange={handleRepostChange} />
           ))}
 
           <div ref={sentinelRef} className="feed-sentinel">
