@@ -36,6 +36,7 @@ async function runMigrations() {
 app.use('/api/auth', require('./routes/auth'))
 app.use('/api/posts', require('./routes/posts'))
 app.use('/api/social', require('./routes/social'))
+app.use('/api/messages', require('./routes/messages'))
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 
