@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../api'
 import { useAuth } from '../context/AuthContext'
 
@@ -9,6 +9,32 @@ function timeAgo(dateStr) {
   if (diff < 3600) return `${Math.floor(diff / 60)}m`
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`
   return `${Math.floor(diff / 86400)}d`
+}
+
+// Render post body text with @mention links
+function PostBody({ text }) {
+  if (!text) return null
+  const parts = text.split(/(@[a-zA-Z0-9_]+)/g)
+  return (
+    <p className="post-text">
+      {parts.map((part, i) => {
+        if (/^@[a-zA-Z0-9_]+$/.test(part)) {
+          const username = part.slice(1)
+          return (
+            <Link
+              key={i}
+              to={`/profile/${username}`}
+              className="mention-link"
+              onClick={e => e.stopPropagation()}
+            >
+              {part}
+            </Link>
+          )
+        }
+        return part
+      })}
+    </p>
+  )
 }
 
 function isVideo(url) {
@@ -26,7 +52,7 @@ function QuotedPost({ post }) {
       <div className="quoted-post-meta">
         <strong>{quotedName}</strong> <span>{quotedHandle} · {timeAgo(post.quoted_created_at)}</span>
       </div>
-      {post.quoted_body && <p className="quoted-post-text">{post.quoted_body}</p>}
+      {post.quoted_body && <PostBody text={post.quoted_body} />}
       {media.length > 0 && (
         <div className="quoted-post-media-grid">
           {media.slice(0, 2).map((url, i) => (
@@ -40,12 +66,14 @@ function QuotedPost({ post }) {
   )
 }
 
-export default function PostCard({ post, onQuote, onRepostChange, onDelete }) {
+export default function PostCard({ post, onQuote, onRepostChange, onDelete, onReply, hideThreadLine }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [liked, setLiked] = useState(post.liked_by_me || false)
   const [likeCount, setLikeCount] = useState(post.like_count || 0)
   const [reposted, setReposted] = useState(post.reposted_by_me || false)
   const [repostCount, setRepostCount] = useState(post.repost_count || 0)
+  const [replyCount, setReplyCount] = useState(post.reply_count || 0)
   const [bookmarked, setBookmarked] = useState(post.bookmarked_by_me || false)
   const [showRepostMenu, setShowRepostMenu] = useState(false)
   const [lightbox, setLightbox] = useState(null) // url or null
@@ -144,13 +172,23 @@ export default function PostCard({ post, onQuote, onRepostChange, onDelete }) {
     }
   }
 
+  function handleCardClick(e) {
+    if (e.target.closest('a, button, input, textarea, select, video')) return
+    navigate(`/post/${post.id}`)
+  }
+
   return (
     <>
-      <article className="card post-card">
+      <article className="card post-card" onClick={handleCardClick} style={{ cursor: 'pointer' }}>
         {repostedByName && (
           <div className="repost-context">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4.75h-4.5a4.25 4.25 0 00-4.25 4.25v1.5M8.5 7.75l-3.25 3.25 3.25 3.25M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {repostedByName} reposted
+          </div>
+        )}
+        {post.reply_to_username && (
+          <div className="reply-context">
+            Replying to <Link to={`/profile/${post.reply_to_username}`} onClick={e => e.stopPropagation()}>@{post.reply_to_username}</Link>
           </div>
         )}
         <div className="post-header">
@@ -198,7 +236,7 @@ export default function PostCard({ post, onQuote, onRepostChange, onDelete }) {
           )}
         </div>
 
-        {post.body && <p className="post-text">{post.body}</p>}
+        {post.body && <PostBody text={post.body} />}
 
         {mediaCount > 0 && (
           <div className={`post-media-grid post-media-${mediaCount}`}>
@@ -227,11 +265,11 @@ export default function PostCard({ post, onQuote, onRepostChange, onDelete }) {
         )}
 
         <div className="post-actions">
-          <button className="action-button" aria-label="Comments">
+          <button className="action-button" aria-label="Reply" onClick={e => { e.stopPropagation(); onReply ? onReply(post) : navigate(`/post/${post.id}`) }}>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            0
+            {replyCount}
           </button>
 
           <div className="repost-action-wrap">

@@ -194,6 +194,12 @@ body {
 .post-author { font-weight: 700; font-size: 0.97rem; }
 .post-meta { color: #6b7280; font-size: 0.9rem; }
 .post-text { line-height: 1.8; white-space: pre-line; color: #1f2937; }
+.mention-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+.mention-link:hover { text-decoration: underline; }
 
 /* ── More / options button ──────────────────────────────────────────────── */
 .more-button {

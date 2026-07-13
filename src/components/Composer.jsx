@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { api } from '../api'
 import EmojiPicker from './EmojiPicker'
 import './Composer.css'
@@ -8,6 +8,61 @@ const VALID_TYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp',
   'video/mp4', 'video/webm', 'video/quicktime',
 ]
+
+// ─── @ mention autocomplete hook ─────────────────────────────────────────────
+function useMentionAutocomplete(text, textareaRef) {
+  const [suggestions, setSuggestions] = useState([])
+  const [mentionQuery, setMentionQuery] = useState(null) // { start, query }
+  const debounceRef = useRef(null)
+
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    const pos = el.selectionStart
+    const before = text.slice(0, pos)
+    const match = before.match(/@([a-zA-Z0-9_]*)$/)
+    if (!match) {
+      setMentionQuery(null)
+      setSuggestions([])
+      return
+    }
+    const query = match[1]
+    const start = pos - match[0].length
+    setMentionQuery({ start, query })
+    clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      if (query.length === 0) { setSuggestions([]); return }
+      try {
+        const data = await api.get(`/social/search-users?q=${encodeURIComponent(query)}`)
+        setSuggestions(data.users || [])
+      } catch {
+        setSuggestions([])
+      }
+    }, 200)
+  }, [text, textareaRef])
+
+  const pickSuggestion = useCallback((username, setText) => {
+    if (!mentionQuery) return
+    const el = textareaRef.current
+    const pos = el ? el.selectionStart : text.length
+    const before = text.slice(0, mentionQuery.start)
+    const after = text.slice(pos)
+    const inserted = `@${username} `
+    const next = before + inserted + after
+    setText(next.slice(0, 280))
+    setSuggestions([])
+    setMentionQuery(null)
+    setTimeout(() => {
+      if (el) {
+        const cursor = before.length + inserted.length
+        el.focus()
+        el.setSelectionRange(cursor, cursor)
+      }
+    }, 0)
+  }, [mentionQuery, text, textareaRef])
+
+  return { suggestions, pickSuggestion }
+}
 
 export default function Composer({ initials, onPost }) {
   const [text, setText] = useState('')
@@ -23,6 +78,8 @@ export default function Composer({ initials, onPost }) {
   const textareaRef = useRef(null)
   const emojiWrapRef = useRef(null)
   const dragCounter = useRef(0)
+
+  const { suggestions, pickSuggestion } = useMentionAutocomplete(text, textareaRef)
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -175,6 +232,24 @@ export default function Composer({ initials, onPost }) {
               maxLength={280}
               rows={2}
             />
+
+            {/* @mention suggestions dropdown */}
+            {suggestions.length > 0 && (
+              <ul className="mention-suggestions">
+                {suggestions.map(u => (
+                  <li key={u.id}>
+                    <button
+                      type="button"
+                      className="mention-suggestion-item"
+                      onMouseDown={e => { e.preventDefault(); pickSuggestion(u.username, setText) }}
+                    >
+                      <span className="mention-suggestion-name">{u.first_name} {u.last_name}</span>
+                      <span className="mention-suggestion-handle">@{u.username}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
 
             {/* Media previews */}
             {mediaFiles.length > 0 && (

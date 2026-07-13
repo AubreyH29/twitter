@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
 import Composer from '../components/Composer'
 import WhoToFollow from '../components/WhoToFollow'
+import ReplyModal from '../components/ReplyModal'
 import './Feed.css'
 
 const TABS = ['For You', 'Following', 'Tech', 'Design', 'News', 'Fitness']
@@ -31,6 +32,7 @@ export default function Feed() {
   const [quotePost, setQuotePost] = useState(null)
   const [quoteBody, setQuoteBody] = useState('')
   const [quoteError, setQuoteError] = useState('')
+  const [replyModal, setReplyModal] = useState(null)
   const sentinelRef = useRef(null)
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?'
@@ -164,7 +166,7 @@ export default function Feed() {
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 
           {posts.map((p) => (
-            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onRepostChange={handleRepostChange} onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))} />
+            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onReply={setReplyModal} onRepostChange={handleRepostChange} onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))} />
           ))}
 
           <div ref={sentinelRef} className="feed-sentinel">
@@ -235,6 +237,20 @@ export default function Feed() {
             </div>
           </form>
         </div>
+      )}
+
+      {replyModal && (
+        <ReplyModal
+          post={replyModal}
+          onClose={() => setReplyModal(null)}
+          onReply={(newReply, originalPost) => {
+            // update reply count on the original post in the feed
+            setPosts(prev => prev.map(p =>
+              p.id === originalPost?.id ? { ...p, reply_count: (p.reply_count || 0) + 1 } : p
+            ))
+            setReplyModal(null)
+          }}
+        />
       )}
     </div>
   )

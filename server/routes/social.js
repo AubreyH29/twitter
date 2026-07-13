@@ -416,7 +416,7 @@ router.get('/likes/:username', requireAuth, async (req, res) => {
        JOIN users  u  ON u.id = p.user_id
        LEFT JOIN likes   l2 ON l2.post_id = p.id
        LEFT JOIN reposts rp ON rp.post_id = p.id
-       WHERE lk.user_id = $1
+       WHERE lk.user_id = $1 AND p.deleted_at IS NULL
        GROUP BY p.id, u.id, lk.created_at
        ORDER BY lk.created_at DESC
        LIMIT $3 OFFSET $4`,
@@ -426,6 +426,27 @@ router.get('/likes/:username', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Get liked posts error:', err)
     return res.status(500).json({ error: 'Failed to load liked posts.' })
+  }
+})
+
+// ─── GET /api/social/search-users?q=term ─────────────────────────────────────
+router.get('/search-users', requireAuth, async (req, res) => {
+  const q = (req.query.q || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+  if (!q) return res.json({ users: [] })
+
+  try {
+    const result = await pool.query(
+      `SELECT id, first_name, last_name, username
+       FROM users
+       WHERE username ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1
+       ORDER BY username ASC
+       LIMIT 8`,
+      [`${q}%`]
+    )
+    return res.json({ users: result.rows })
+  } catch (err) {
+    console.error('Search users error:', err)
+    return res.status(500).json({ error: 'Failed to search users.' })
   }
 })
 

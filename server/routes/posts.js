@@ -59,19 +59,23 @@ router.get('/', requireAuth, async (req, res) => {
       `WITH timeline AS (
          SELECT p.id AS post_id, p.created_at AS activity_at, NULL::integer AS reposted_by_id
          FROM posts p
-         WHERE p.user_id = $3
-            OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3)
+         WHERE p.reply_to_id IS NULL
+           AND (p.user_id = $3
+            OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3))
          UNION ALL
          SELECT r.post_id, r.created_at AS activity_at, r.user_id AS reposted_by_id
          FROM reposts r
-         WHERE r.user_id = $3
-            OR r.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3)
+         JOIN posts rp ON rp.id = r.post_id
+         WHERE rp.reply_to_id IS NULL
+           AND (r.user_id = $3
+            OR r.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3))
        )
        SELECT
-         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id,
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp2 WHERE rp2.reply_to_id = p.id AND rp2.deleted_at IS NULL)::int AS reply_count,
          EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $3) AS liked_by_me,
          EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $3) AS reposted_by_me,
          EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $3) AS bookmarked_by_me,
@@ -87,7 +91,7 @@ router.get('/', requireAuth, async (req, res) => {
        LEFT JOIN users qu ON qu.id = qp.user_id
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
-       WHERE p.deleted_at IS NULL
+       WHERE p.deleted_at IS NULL AND p.reply_to_id IS NULL
        GROUP BY p.id, u.id, t.activity_at, t.reposted_by_id, ru.id, qp.id, qu.id
        ORDER BY t.activity_at DESC
        LIMIT $1 OFFSET $2`,
@@ -120,10 +124,11 @@ router.get('/user/:username', requireAuth, async (req, res) => {
 
     const result = await pool.query(
       `SELECT
-         p.id, p.body, p.media_urls, p.location, p.created_at,
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
          EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $4) AS liked_by_me,
          EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $4) AS reposted_by_me,
          EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $4) AS bookmarked_by_me
@@ -131,7 +136,7 @@ router.get('/user/:username', requireAuth, async (req, res) => {
        JOIN users u ON u.id = p.user_id
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
-       WHERE p.user_id = $1 AND p.deleted_at IS NULL
+       WHERE p.user_id = $1 AND p.deleted_at IS NULL AND p.reply_to_id IS NULL
        GROUP BY p.id, u.id
        ORDER BY p.created_at DESC
        LIMIT $2 OFFSET $3`,
@@ -169,18 +174,177 @@ router.get('/user/:username', requireAuth, async (req, res) => {
   }
 })
 
+// ─── GET /api/posts/user/:username/replies ───────────────────────────────────
+router.get('/user/:username/replies', requireAuth, async (req, res) => {
+  const { username } = req.params
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = 20
+  const offset = (page - 1) * limit
+  const currentUserId = req.user.userId
+
+  try {
+    const userRes = await pool.query(
+      'SELECT * FROM users WHERE username = $1 LIMIT 1',
+      [username.toLowerCase()]
+    )
+    if (userRes.rowCount === 0) return res.status(404).json({ error: 'User not found.' })
+    const profileUser = userRes.rows[0]
+
+    const result = await pool.query(
+      `SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
+         u.id AS user_id, u.first_name, u.last_name, u.username,
+         COUNT(DISTINCT l.user_id)::int  AS like_count,
+         COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+         EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $4) AS liked_by_me,
+         EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $4) AS reposted_by_me,
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $4) AS bookmarked_by_me,
+         pu.username AS reply_to_username, pu.first_name AS reply_to_first_name, pu.last_name AS reply_to_last_name,
+         pp.body AS reply_to_body
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN posts pp ON pp.id = p.reply_to_id
+       LEFT JOIN users pu ON pu.id = pp.user_id
+       LEFT JOIN likes   l ON l.post_id = p.id
+       LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.user_id = $1 AND p.deleted_at IS NULL AND p.reply_to_id IS NOT NULL
+       GROUP BY p.id, u.id, pu.id, pp.id
+       ORDER BY p.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [profileUser.id, limit, offset, currentUserId]
+    )
+
+    return res.json({ replies: result.rows, page, hasMore: result.rows.length === limit })
+  } catch (err) {
+    console.error('Get user replies error:', err)
+    return res.status(500).json({ error: 'Failed to load replies.' })
+  }
+})
+
+// ─── GET /api/posts/:id ───────────────────────────────────────────────────────
+router.get('/:id', requireAuth, async (req, res) => {
+  const postId = parseInt(req.params.id, 10)
+  if (!postId) return res.status(400).json({ error: 'Invalid post id.' })
+  const currentUserId = req.user.userId
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
+         u.id AS user_id, u.first_name, u.last_name, u.username,
+         COUNT(DISTINCT l.user_id)::int  AS like_count,
+         COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+         EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $2) AS liked_by_me,
+         EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $2) AS reposted_by_me,
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $2) AS bookmarked_by_me,
+         pu.username AS reply_to_username, pu.first_name AS reply_to_first_name, pu.last_name AS reply_to_last_name,
+         qp.body AS quoted_body, qp.media_urls AS quoted_media_urls, qp.created_at AS quoted_created_at,
+         qu.id AS quoted_user_id, qu.first_name AS quoted_first_name, qu.last_name AS quoted_last_name, qu.username AS quoted_username
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN posts pp ON pp.id = p.reply_to_id
+       LEFT JOIN users pu ON pu.id = pp.user_id
+       LEFT JOIN posts qp ON qp.id = p.quote_post_id
+       LEFT JOIN users qu ON qu.id = qp.user_id
+       LEFT JOIN likes   l ON l.post_id = p.id
+       LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.id = $1 AND p.deleted_at IS NULL
+       GROUP BY p.id, u.id, pu.id, pp.id, qp.id, qu.id`,
+      [postId, currentUserId]
+    )
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Post not found.' })
+
+    const post = result.rows[0]
+    let parentPost = null
+
+    if (post.reply_to_id) {
+      const parentRes = await pool.query(
+        `SELECT
+           p.id, p.body, p.media_urls, p.location, p.created_at, p.reply_to_id,
+           u.id AS user_id, u.first_name, u.last_name, u.username,
+           COUNT(DISTINCT l.user_id)::int AS like_count,
+           COUNT(DISTINCT r.user_id)::int AS repost_count,
+           (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+           EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2) AS liked_by_me,
+           EXISTS(SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $2) AS reposted_by_me,
+           EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $2) AS bookmarked_by_me,
+           pu.username AS reply_to_username
+         FROM posts p
+         JOIN users u ON u.id = p.user_id
+         LEFT JOIN posts pp ON pp.id = p.reply_to_id
+         LEFT JOIN users pu ON pu.id = pp.user_id
+         LEFT JOIN likes l ON l.post_id = p.id
+         LEFT JOIN reposts r ON r.post_id = p.id
+         WHERE p.id = $1 AND p.deleted_at IS NULL
+         GROUP BY p.id, u.id, pu.id`,
+        [post.reply_to_id, currentUserId]
+      )
+      parentPost = parentRes.rows[0] || null
+    }
+
+    return res.json({ post, parentPost })
+  } catch (err) {
+    console.error('Get post error:', err)
+    return res.status(500).json({ error: 'Failed to load post.' })
+  }
+})
+
+// ─── GET /api/posts/:id/replies ───────────────────────────────────────────────
+router.get('/:id/replies', requireAuth, async (req, res) => {
+  const postId = parseInt(req.params.id, 10)
+  if (!postId) return res.status(400).json({ error: 'Invalid post id.' })
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = 20
+  const offset = (page - 1) * limit
+  const currentUserId = req.user.userId
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.reply_to_id,
+         u.id AS user_id, u.first_name, u.last_name, u.username,
+         COUNT(DISTINCT l.user_id)::int  AS like_count,
+         COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+         EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $3) AS liked_by_me,
+         EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $3) AS reposted_by_me,
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $3) AS bookmarked_by_me,
+         $2::integer AS reply_to_id_val
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN likes   l ON l.post_id = p.id
+       LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.reply_to_id = $1 AND p.deleted_at IS NULL
+       GROUP BY p.id, u.id
+       ORDER BY p.created_at ASC
+       LIMIT $4 OFFSET $5`,
+      [postId, postId, currentUserId, limit, offset]
+    )
+    return res.json({ replies: result.rows, page, hasMore: result.rows.length === limit })
+  } catch (err) {
+    console.error('Get replies error:', err)
+    return res.status(500).json({ error: 'Failed to load replies.' })
+  }
+})
+
 // ─── POST /api/posts ──────────────────────────────────────────────────────────
 router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
   const body     = (req.body.body || '').trim()
   const location = (req.body.location || '').trim().slice(0, 100)
   const mediaUrls = (req.files || []).map(f => `/api/uploads/${f.filename}`)
   const quotePostId = req.body.quote_post_id ? parseInt(req.body.quote_post_id) : null
+  const replyToId   = req.body.reply_to_id   ? parseInt(req.body.reply_to_id)   : null
 
   if (!body && mediaUrls.length === 0 && !quotePostId) {
     return res.status(400).json({ error: 'Post must have text or media.' })
   }
   if (quotePostId !== null && isNaN(quotePostId)) {
     return res.status(400).json({ error: 'Invalid quoted post ID.' })
+  }
+  if (replyToId !== null && isNaN(replyToId)) {
+    return res.status(400).json({ error: 'Invalid reply_to_id.' })
   }
   if (body.length > 280) {
     return res.status(400).json({ error: 'Post cannot exceed 280 characters.' })
@@ -191,14 +355,61 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
       const quoteRes = await pool.query('SELECT id FROM posts WHERE id = $1', [quotePostId])
       if (quoteRes.rowCount === 0) return res.status(404).json({ error: 'Quoted post not found.' })
     }
+    if (replyToId) {
+      const replyCheck = await pool.query('SELECT id FROM posts WHERE id = $1 AND deleted_at IS NULL', [replyToId])
+      if (replyCheck.rowCount === 0) return res.status(404).json({ error: 'Post being replied to not found.' })
+    }
 
     const result = await pool.query(
-      `INSERT INTO posts (user_id, body, media_urls, location, quote_post_id)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, body, media_urls, location, quote_post_id, created_at`,
-      [req.user.userId, body, mediaUrls, location, quotePostId]
+      `INSERT INTO posts (user_id, body, media_urls, location, quote_post_id, reply_to_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, body, media_urls, location, quote_post_id, reply_to_id, created_at`,
+      [req.user.userId, body, mediaUrls, location, quotePostId, replyToId]
     )
     const post = result.rows[0]
+    const actorId = req.user.userId
+
+    // ─── Reply notification ────────────────────────────────────────────────
+    if (replyToId) {
+      const parentRes = await pool.query('SELECT user_id FROM posts WHERE id = $1', [replyToId])
+      if (parentRes.rowCount > 0) {
+        const parentOwnerId = parentRes.rows[0].user_id
+        if (parentOwnerId !== actorId) {
+          await pool.query(
+            `INSERT INTO notifications (user_id, actor_id, type, post_id)
+             VALUES ($1, $2, 'reply', $3)
+             ON CONFLICT DO NOTHING`,
+            [parentOwnerId, actorId, post.id]
+          )
+        }
+      }
+    }
+
+    // ─── Mention notifications ─────────────────────────────────────────────
+    if (body) {
+      const mentionHandles = [...new Set(
+        (body.match(/@([a-zA-Z0-9_]+)/g) || []).map(m => m.slice(1).toLowerCase())
+      )]
+      if (mentionHandles.length > 0) {
+        const mentionRes = await pool.query(
+          `SELECT id, username FROM users WHERE username = ANY($1::text[])`,
+          [mentionHandles]
+        )
+        for (const mentionedUser of mentionRes.rows) {
+          if (mentionedUser.id !== actorId) {
+            await pool.query(
+              `INSERT INTO notifications (user_id, actor_id, type, post_id)
+               SELECT $1, $2, 'mention', $3
+               WHERE NOT EXISTS (
+                 SELECT 1 FROM notifications
+                 WHERE user_id = $1 AND actor_id = $2 AND type = 'mention' AND post_id = $3
+               )`,
+              [mentionedUser.id, actorId, post.id]
+            )
+          }
+        }
+      }
+    }
 
     const userRes = await pool.query('SELECT * FROM users WHERE id = $1', [req.user.userId])
     const u = userRes.rows[0]
@@ -210,6 +421,7 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
         media_urls: post.media_urls || [],
         location: post.location || '',
         quote_post_id: post.quote_post_id,
+        reply_to_id: post.reply_to_id,
         created_at: post.created_at,
         user_id: u.id,
         first_name: u.first_name,
@@ -217,6 +429,7 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
         username: u.username,
         like_count: 0,
         repost_count: 0,
+        reply_count: 0,
         liked_by_me: false,
         reposted_by_me: false,
         bookmarked_by_me: false,

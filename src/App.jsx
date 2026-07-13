@@ -10,6 +10,7 @@ import Explore from './pages/Explore'
 import Notifications from './pages/Notifications'
 import Messages from './pages/Messages'
 import Bookmarks from './pages/Bookmarks'
+import PostThread from './pages/PostThread'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -30,6 +31,7 @@ export default function App() {
       <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
       <Route path="/bookmarks" element={<PrivateRoute><Bookmarks /></PrivateRoute>} />
       <Route path="/profile/:username" element={<PrivateRoute><Profile /></PrivateRoute>} />
+      <Route path="/post/:id" element={<PrivateRoute><PostThread /></PrivateRoute>} />
     </Routes>
   )
 }

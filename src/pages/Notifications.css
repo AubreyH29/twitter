@@ -59,9 +59,11 @@
   flex-shrink: 0;
 }
 .notif-icon svg { width: 20px; height: 20px; }
-.notif-icon-like   { background: #fce7f3; }
-.notif-icon-follow { background: #dbeafe; }
-.notif-icon-repost { background: #d1fae5; }
+.notif-icon-like    { background: #fce7f3; }
+.notif-icon-follow  { background: #dbeafe; }
+.notif-icon-repost  { background: #d1fae5; }
+.notif-icon-reply   { background: #e0f2fe; }
+.notif-icon-mention { background: #ede9fe; }
 .notif-icon-default { background: #f3f4f6; }
 
 .notif-body { flex: 1; min-width: 0; }

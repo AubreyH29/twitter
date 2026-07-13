@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
+import ReplyModal from '../components/ReplyModal'
 import './Profile.css'
 import './Feed.css'
 
@@ -98,6 +99,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState(0)
   const [posts, setPosts] = useState([])
   const [likePosts, setLikePosts] = useState([])
+  const [replyPosts, setReplyPosts] = useState([])
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -109,6 +111,11 @@ export default function Profile() {
   const [followLoading, setFollowLoading] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [loadingLikes, setLoadingLikes] = useState(false)
+  const [loadingReplies, setLoadingReplies] = useState(false)
+  const [replyModal, setReplyModal] = useState(null)
+  const [quotePost, setQuotePost] = useState(null)
+  const [quoteBody, setQuoteBody] = useState('')
+  const [quoteError, setQuoteError] = useState('')
   const sentinelRef = useRef(null)
 
   const isOwnProfile = user?.username === username
@@ -138,6 +145,7 @@ export default function Profile() {
     setNotFound(false)
     setPosts([])
     setLikePosts([])
+    setReplyPosts([])
     setPage(1)
     setHasMore(true)
     setActiveTab(0)
@@ -187,6 +195,57 @@ export default function Profile() {
         setLoadingLikes(false)
       }
     }
+    if (idx === 2 && replyPosts.length === 0) {
+      setLoadingReplies(true)
+      try {
+        const data = await api.get(`/posts/user/${username}/replies`)
+        setReplyPosts(data.replies)
+      } catch (err) {
+        console.error('Failed to load replies:', err)
+      } finally {
+        setLoadingReplies(false)
+      }
+    }
+  }
+
+  async function submitQuote(e) {
+    e.preventDefault()
+    if (!quotePost) return
+    setQuoteError('')
+    try {
+      const form = new FormData()
+      form.append('body', quoteBody.trim())
+      form.append('quote_post_id', String(quotePost.id))
+      const data = await api.postForm('/posts', form)
+      // Add the new quote-tweet to the top of the posts list if viewing own profile
+      if (isOwnProfile) {
+        setPosts(prev => [{
+          ...data.post,
+          quoted_body: quotePost.body,
+          quoted_media_urls: quotePost.media_urls || [],
+          quoted_created_at: quotePost.created_at,
+          quoted_user_id: quotePost.user_id,
+          quoted_first_name: quotePost.first_name,
+          quoted_last_name: quotePost.last_name,
+          quoted_username: quotePost.username,
+        }, ...prev])
+      }
+      setQuotePost(null)
+      setQuoteBody('')
+    } catch (err) {
+      setQuoteError(err.message || 'Failed to quote post.')
+    }
+  }
+
+  function handleRepostChange(post, isReposted, data) {
+    const updateCount = (arr) => arr.map(p =>
+      p.id === post.id
+        ? { ...p, reposted_by_me: isReposted, repost_count: data?.repost_count ?? p.repost_count }
+        : p
+    )
+    setPosts(updateCount)
+    setLikePosts(updateCount)
+    setReplyPosts(updateCount)
   }
 
   function handleEditSave(updatedUser) {
@@ -204,7 +263,7 @@ export default function Profile() {
     ? `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase()
     : '?'
 
-  const activePosts = activeTab === 0 ? posts : activeTab === 1 ? likePosts : []
+  const activePosts = activeTab === 0 ? posts : activeTab === 1 ? likePosts : activeTab === 2 ? replyPosts : []
 
   return (
     <div className="page-shell">
@@ -285,7 +344,7 @@ export default function Profile() {
             <section className="feed">
               {(activeTab === 0 && loadingInitial) && <div className="feed-loading-state">Loading posts…</div>}
               {(activeTab === 1 && loadingLikes) && <div className="feed-loading-state">Loading liked posts…</div>}
-              {activeTab === 2 && <div className="card profile-empty"><p>Replies aren't available yet.</p></div>}
+              {(activeTab === 2 && loadingReplies) && <div className="feed-loading-state">Loading replies…</div>}
               {activeTab === 3 && <div className="card profile-empty"><p>Media posts aren't available yet.</p></div>}
 
               {!loadingInitial && activeTab === 0 && posts.length === 0 && (
@@ -305,11 +364,24 @@ export default function Profile() {
                 </div>
               )}
 
+              {!loadingReplies && activeTab === 2 && replyPosts.length === 0 && (
+                <div className="card profile-empty">
+                  <p>{isOwnProfile ? "You haven't replied to any tweets yet." : "No replies yet."}</p>
+                </div>
+              )}
+
               {activePosts.map(p => (
                 <PostCard
                   key={p.id}
                   post={p}
-                  onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
+                  onQuote={setQuotePost}
+                  onReply={setReplyModal}
+                  onRepostChange={handleRepostChange}
+                  onDelete={(id) => {
+                    setPosts(prev => prev.filter(x => x.id !== id))
+                    setLikePosts(prev => prev.filter(x => x.id !== id))
+                    setReplyPosts(prev => prev.filter(x => x.id !== id))
+                  }}
                 />
               ))}
 
@@ -376,6 +448,45 @@ export default function Profile() {
 
       {showEditModal && profile && (
         <EditProfileModal profile={profile} onClose={() => setShowEditModal(false)} onSave={handleEditSave} />
+      )}
+
+      {replyModal && (
+        <ReplyModal
+          post={replyModal}
+          onClose={() => setReplyModal(null)}
+          onReply={(newReply, originalPost) => {
+            const enriched = { ...newReply, reply_to_username: originalPost?.username, reply_count: 0 }
+            if (isOwnProfile) setReplyPosts(prev => [enriched, ...prev])
+            setReplyModal(null)
+          }}
+        />
+      )}
+
+      {quotePost && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) { setQuotePost(null); setQuoteBody(''); setQuoteError('') } }}>
+          <form className="quote-modal" onSubmit={submitQuote}>
+            <div className="quote-modal-header">
+              <h2>Quote post</h2>
+              <button type="button" className="modal-close" aria-label="Close" onClick={() => { setQuotePost(null); setQuoteBody(''); setQuoteError('') }}>×</button>
+            </div>
+            <textarea
+              value={quoteBody}
+              onChange={e => setQuoteBody(e.target.value.slice(0, 280))}
+              placeholder="Add a comment"
+              rows={4}
+              autoFocus
+            />
+            <div className="quoted-post quote-modal-preview">
+              <div className="quoted-post-meta"><strong>{quotePost.first_name} {quotePost.last_name}</strong> <span>@{quotePost.username}</span></div>
+              {quotePost.body && <p className="quoted-post-text">{quotePost.body}</p>}
+            </div>
+            {quoteError && <div className="composer-error">{quoteError}</div>}
+            <div className="quote-modal-actions">
+              <span>{quoteBody.length}/280</span>
+              <button className="primary-button" type="submit">Post</button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   )

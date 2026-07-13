@@ -20,6 +20,7 @@ function notifMessage(n) {
   if (n.type === 'follow') return <><strong>{name}</strong> followed you</>
   if (n.type === 'repost') return <><strong>{name}</strong> reposted your post</>
   if (n.type === 'reply') return <><strong>{name}</strong> replied to your post</>
+  if (n.type === 'mention') return <><strong>{name}</strong> mentioned you in a post</>
   return <><strong>{name}</strong> interacted with you</>
 }
 
@@ -46,6 +47,22 @@ function notifIcon(type) {
         <path d="M8.5 7.75l-3.25 3.25 3.25 3.25" fill="none" stroke="#00ba7c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M8 19.25h4.5a4.25 4.25 0 004.25-4.25v-1.5" fill="none" stroke="#00ba7c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M15.5 16.25l3.25-3.25-3.25-3.25" fill="none" stroke="#00ba7c" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </div>
+  )
+  if (type === 'mention') return (
+    <div className="notif-icon notif-icon-mention">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" fill="none" stroke="#7c3aed" strokeWidth="1.8" />
+        <path d="M16 12a4 4 0 11-1.17 2.83" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M20 12a8 8 0 10-2.34 5.66" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+  if (type === 'reply') return (
+    <div className="notif-icon notif-icon-reply">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 5.75h12a1.5 1.5 0 011.5 1.5v7.5a1.5 1.5 0 01-1.5 1.5H10.5l-4.5 3v-3H6a1.5 1.5 0 01-1.5-1.5v-7.5A1.5 1.5 0 016 5.75z" fill="none" stroke="#0ea5e9" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
   )
@@ -116,7 +133,12 @@ export default function Notifications() {
           )}
 
           {notifications.map(n => (
-            <div key={n.id} className={`card notif-item${n.read ? '' : ' notif-unread'}`}>
+            <div
+              key={n.id}
+              className={`card notif-item${n.read ? '' : ' notif-unread'}`}
+              onClick={() => n.post_id && (window.location.href = `/post/${n.post_id}`)}
+              style={n.post_id ? { cursor: 'pointer' } : {}}
+            >
               {notifIcon(n.type)}
               <div className="notif-body">
                 <div className="notif-text">
@@ -126,7 +148,7 @@ export default function Notifications() {
                 {n.post_body && (
                   <div className="notif-post-preview">{n.post_body.slice(0, 100)}{n.post_body.length > 100 ? '…' : ''}</div>
                 )}
-                <Link to={`/profile/${n.actor_username}`} className="notif-actor-link">
+                <Link to={`/profile/${n.actor_username}`} className="notif-actor-link" onClick={e => e.stopPropagation()}>
                   @{n.actor_username}
                 </Link>
               </div>
