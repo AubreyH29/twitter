@@ -471,14 +471,194 @@ body {
 .more-button {
   border: none;
   background: transparent;
-  color: #6b7280;
+  color: #9ca3af;
   cursor: pointer;
   padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.more-button:hover,
+.more-button--active {
+  background: #eff6ff;
+  color: #2563eb;
 }
 
 .more-button svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+/* ── Post popover ─────────────────────────────────────────────────────────── */
+.more-menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.post-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  min-width: 200px;
+  z-index: 300;
+  overflow: hidden;
+  animation: popover-in 0.12s ease;
+}
+
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.post-popover-arrow {
+  position: absolute;
+  top: -5px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+  transform: rotate(45deg);
+  border-radius: 2px 0 0 0;
+}
+
+.post-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  background: transparent;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.post-popover-item--danger {
+  color: #dc2626;
+}
+
+.post-popover-item--danger:hover {
+  background: #fff5f5;
+}
+
+/* ── Delete confirm modal ─────────────────────────────────────────────────── */
+.delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 25, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+  animation: backdrop-in 0.15s ease;
+}
+
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.delete-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px 28px 28px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: modal-in 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.delete-modal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  margin-bottom: 16px;
+}
+
+.delete-modal-title {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.01em;
+}
+
+.delete-modal-body {
+  margin: 0 0 24px;
+  font-size: 0.9375rem;
+  color: #6b7280;
+  line-height: 1.55;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.delete-modal-btn {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.delete-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-modal-btn--cancel {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.delete-modal-btn--cancel:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.delete-modal-btn--confirm {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.delete-modal-btn--confirm:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 .media-grid {

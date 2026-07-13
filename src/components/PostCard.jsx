@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
+import { useAuth } from '../context/AuthContext'
 
 function timeAgo(dateStr) {
   const diff = (Date.now() - new Date(dateStr)) / 1000
@@ -39,7 +40,8 @@ function QuotedPost({ post }) {
   )
 }
 
-export default function PostCard({ post, onQuote, onRepostChange }) {
+export default function PostCard({ post, onQuote, onRepostChange, onDelete }) {
+  const { user } = useAuth()
   const [liked, setLiked] = useState(post.liked_by_me || false)
   const [likeCount, setLikeCount] = useState(post.like_count || 0)
   const [reposted, setReposted] = useState(post.reposted_by_me || false)
@@ -47,6 +49,48 @@ export default function PostCard({ post, onQuote, onRepostChange }) {
   const [bookmarked, setBookmarked] = useState(post.bookmarked_by_me || false)
   const [showRepostMenu, setShowRepostMenu] = useState(false)
   const [lightbox, setLightbox] = useState(null) // url or null
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const menuRef = useRef(null)
+
+  const isOwnPost = user && user.id === post.user_id
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleOutside(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [menuOpen])
+
+  // Close confirm modal on Escape
+  useEffect(() => {
+    if (!confirmOpen) return
+    function handleKey(e) {
+      if (e.key === 'Escape') setConfirmOpen(false)
+    }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [confirmOpen])
+
+  function openConfirm() {
+    setMenuOpen(false)
+    setConfirmOpen(true)
+  }
+
+  async function handleDelete() {
+    setDeleting(true)
+    try {
+      await api.del(`/posts/${post.id}`)
+      setConfirmOpen(false)
+      onDelete?.(post.id)
+    } catch {
+      setDeleting(false)
+    }
+  }
 
   const authorInitials = `${post.first_name[0]}${post.last_name[0]}`.toUpperCase()
   const authorName = `${post.first_name} ${post.last_name}`
@@ -119,13 +163,39 @@ export default function PostCard({ post, onQuote, onRepostChange }) {
               <div className="post-meta">{authorHandle} · {timeAgo(post.created_at)}</div>
             </div>
           </div>
-          <button className="more-button" aria-label="More options">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.25" fill="currentColor" />
-              <circle cx="12" cy="12" r="1.25" fill="currentColor" />
-              <circle cx="19" cy="12" r="1.25" fill="currentColor" />
-            </svg>
-          </button>
+          {isOwnPost && (
+            <div className="more-menu-wrap" ref={menuRef}>
+              <button
+                className={`more-button${menuOpen ? ' more-button--active' : ''}`}
+                aria-label="More options"
+                aria-haspopup="true"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen(o => !o)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                  <circle cx="19" cy="12" r="1.5" fill="currentColor" />
+                </svg>
+              </button>
+
+              {menuOpen && (
+                <div className="post-popover" role="menu">
+                  <div className="post-popover-arrow" aria-hidden="true" />
+                  <button
+                    className="post-popover-item post-popover-item--danger"
+                    role="menuitem"
+                    onClick={openConfirm}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="18" height="18">
+                      <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    Delete tweet
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {post.body && <p className="post-text">{post.body}</p>}
@@ -203,6 +273,39 @@ export default function PostCard({ post, onQuote, onRepostChange }) {
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
           </button>
           <img src={lightbox} alt="" className="post-lightbox-img" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
+
+      {/* Delete confirm modal */}
+      {confirmOpen && (
+        <div className="delete-modal-backdrop" onClick={() => !deleting && setConfirmOpen(false)}>
+          <div className="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" onClick={e => e.stopPropagation()}>
+            <div className="delete-modal-icon">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" width="28" height="28">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h2 id="delete-modal-title" className="delete-modal-title">Delete this tweet?</h2>
+            <p className="delete-modal-body">
+              This tweet will be removed from your profile and won&apos;t appear in anyone&apos;s feed. This action cannot be undone.
+            </p>
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-btn delete-modal-btn--cancel"
+                onClick={() => setConfirmOpen(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="delete-modal-btn delete-modal-btn--confirm"
+                onClick={handleDelete}
+                disabled={deleting}
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

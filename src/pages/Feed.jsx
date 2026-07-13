@@ -164,7 +164,7 @@ export default function Feed() {
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 
           {posts.map((p) => (
-            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onRepostChange={handleRepostChange} />
+            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onRepostChange={handleRepostChange} onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))} />
           ))}
 
           <div ref={sentinelRef} className="feed-sentinel">

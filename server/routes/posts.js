@@ -87,6 +87,7 @@ router.get('/', requireAuth, async (req, res) => {
        LEFT JOIN users qu ON qu.id = qp.user_id
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.deleted_at IS NULL
        GROUP BY p.id, u.id, t.activity_at, t.reposted_by_id, ru.id, qp.id, qu.id
        ORDER BY t.activity_at DESC
        LIMIT $1 OFFSET $2`,
@@ -130,7 +131,7 @@ router.get('/user/:username', requireAuth, async (req, res) => {
        JOIN users u ON u.id = p.user_id
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
-       WHERE p.user_id = $1
+       WHERE p.user_id = $1 AND p.deleted_at IS NULL
        GROUP BY p.id, u.id
        ORDER BY p.created_at DESC
        LIMIT $2 OFFSET $3`,
@@ -224,6 +225,28 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
   } catch (err) {
     console.error('Create post error:', err)
     return res.status(500).json({ error: 'Failed to create post.' })
+  }
+})
+
+// ─── DELETE /api/posts/:id ───────────────────────────────────────────────────
+router.delete('/:id', requireAuth, async (req, res) => {
+  const postId = parseInt(req.params.id, 10)
+  if (!postId) return res.status(400).json({ error: 'Invalid post id.' })
+
+  try {
+    const result = await pool.query(
+      `UPDATE posts SET deleted_at = now()
+       WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL
+       RETURNING id`,
+      [postId, req.user.userId]
+    )
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found or not yours.' })
+    }
+    return res.json({ success: true })
+  } catch (err) {
+    console.error('Delete post error:', err)
+    return res.status(500).json({ error: 'Failed to delete post.' })
   }
 })
 
