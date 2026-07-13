@@ -196,7 +196,12 @@ router.post('/repost/:postId', requireAuth, async (req, res) => {
     }
 
     const countRes = await pool.query('SELECT COUNT(*) FROM reposts WHERE post_id = $1', [postId])
-    return res.json({ reposted: true, repost_count: parseInt(countRes.rows[0].count) })
+    const activityRes = await pool.query('SELECT created_at FROM reposts WHERE user_id = $1 AND post_id = $2', [userId, postId])
+    return res.json({
+      reposted: true,
+      repost_count: parseInt(countRes.rows[0].count),
+      activity_at: activityRes.rows[0]?.created_at,
+    })
   } catch (err) {
     console.error('Repost error:', err)
     return res.status(500).json({ error: 'Failed to repost.' })

@@ -28,6 +28,9 @@ export default function Feed() {
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [loadingInitial, setLoadingInitial] = useState(true)
+  const [quotePost, setQuotePost] = useState(null)
+  const [quoteBody, setQuoteBody] = useState('')
+  const [quoteError, setQuoteError] = useState('')
   const sentinelRef = useRef(null)
 
   const initials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : '?'
@@ -61,6 +64,58 @@ export default function Feed() {
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [hasMore, loadingMore, page, loadPosts])
+
+  function handleRepostChange(post, isReposted, data) {
+    if (!user) return
+    if (isReposted) {
+      const repostActivity = {
+        ...post,
+        reposted_by_me: true,
+        repost_count: data?.repost_count ?? post.repost_count,
+        activity_at: data?.activity_at || new Date().toISOString(),
+        reposted_by_id: user.id,
+        reposted_by_first_name: user.firstName,
+        reposted_by_last_name: user.lastName,
+        reposted_by_username: user.username,
+      }
+      setPosts(prev => [
+        repostActivity,
+        ...prev.map(p => p.id === post.id ? { ...p, reposted_by_me: true, repost_count: data?.repost_count ?? p.repost_count } : p)
+          .filter(p => !(p.id === post.id && p.reposted_by_id === user.id))
+      ])
+    } else {
+      setPosts(prev => prev
+        .filter(p => !(p.id === post.id && p.reposted_by_id === user.id))
+        .map(p => p.id === post.id ? { ...p, reposted_by_me: false, repost_count: data?.repost_count ?? p.repost_count } : p)
+      )
+    }
+  }
+
+  async function submitQuote(e) {
+    e.preventDefault()
+    if (!quotePost) return
+    setQuoteError('')
+    try {
+      const form = new FormData()
+      form.append('body', quoteBody.trim())
+      form.append('quote_post_id', String(quotePost.id))
+      const data = await api.postForm('/posts', form)
+      setPosts(prev => [{
+        ...data.post,
+        quoted_body: quotePost.body,
+        quoted_media_urls: quotePost.media_urls || [],
+        quoted_created_at: quotePost.created_at,
+        quoted_user_id: quotePost.user_id,
+        quoted_first_name: quotePost.first_name,
+        quoted_last_name: quotePost.last_name,
+        quoted_username: quotePost.username,
+      }, ...prev])
+      setQuotePost(null)
+      setQuoteBody('')
+    } catch (err) {
+      setQuoteError(err.message || 'Failed to quote post.')
+    }
+  }
 
   const updateArrows = () => {
     const el = tabsRef.current
@@ -109,11 +164,7 @@ export default function Feed() {
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
 
           {posts.map((p) => (
-            <PostCard
-              key={p.id}
-              post={p}
-              onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))}
-            />
+            <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onRepostChange={handleRepostChange} onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))} />
           ))}
 
           <div ref={sentinelRef} className="feed-sentinel">
@@ -158,6 +209,33 @@ export default function Feed() {
           <WhoToFollow />
         </div>
       </aside>
+
+      {quotePost && (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setQuotePost(null) }}>
+          <form className="quote-modal" onSubmit={submitQuote}>
+            <div className="quote-modal-header">
+              <h2>Quote post</h2>
+              <button type="button" className="modal-close" aria-label="Close" onClick={() => setQuotePost(null)}>×</button>
+            </div>
+            <textarea
+              value={quoteBody}
+              onChange={e => setQuoteBody(e.target.value.slice(0, 280))}
+              placeholder="Add a comment"
+              rows={4}
+              autoFocus
+            />
+            <div className="quoted-post quote-modal-preview">
+              <div className="quoted-post-meta"><strong>{quotePost.first_name} {quotePost.last_name}</strong> <span>@{quotePost.username}</span></div>
+              {quotePost.body && <p className="quoted-post-text">{quotePost.body}</p>}
+            </div>
+            {quoteError && <div className="composer-error">{quoteError}</div>}
+            <div className="quote-modal-actions">
+              <span>{quoteBody.length}/280</span>
+              <button className="primary-button" type="submit">Post</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

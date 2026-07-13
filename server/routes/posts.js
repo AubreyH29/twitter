@@ -56,21 +56,40 @@ router.get('/', requireAuth, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT
-         p.id, p.body, p.media_urls, p.location, p.created_at,
+      `WITH timeline AS (
+         SELECT p.id AS post_id, p.created_at AS activity_at, NULL::integer AS reposted_by_id
+         FROM posts p
+         WHERE p.user_id = $3
+            OR p.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3)
+         UNION ALL
+         SELECT r.post_id, r.created_at AS activity_at, r.user_id AS reposted_by_id
+         FROM reposts r
+         WHERE r.user_id = $3
+            OR r.user_id IN (SELECT following_id FROM follows WHERE follower_id = $3)
+       )
+       SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id,
          u.id AS user_id, u.first_name, u.last_name, u.username,
          COUNT(DISTINCT l.user_id)::int  AS like_count,
          COUNT(DISTINCT r.user_id)::int  AS repost_count,
          EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $3) AS liked_by_me,
          EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $3) AS reposted_by_me,
-         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $3) AS bookmarked_by_me
-       FROM posts p
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $3) AS bookmarked_by_me,
+         t.activity_at, t.reposted_by_id, ru.first_name AS reposted_by_first_name,
+         ru.last_name AS reposted_by_last_name, ru.username AS reposted_by_username,
+         qp.body AS quoted_body, qp.media_urls AS quoted_media_urls, qp.created_at AS quoted_created_at,
+         qu.id AS quoted_user_id, qu.first_name AS quoted_first_name, qu.last_name AS quoted_last_name, qu.username AS quoted_username
+       FROM timeline t
+       JOIN posts p ON p.id = t.post_id
        JOIN users u ON u.id = p.user_id
+       LEFT JOIN users ru ON ru.id = t.reposted_by_id
+       LEFT JOIN posts qp ON qp.id = p.quote_post_id
+       LEFT JOIN users qu ON qu.id = qp.user_id
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
        WHERE p.deleted_at IS NULL
-       GROUP BY p.id, u.id
-       ORDER BY p.created_at DESC
+       GROUP BY p.id, u.id, t.activity_at, t.reposted_by_id, ru.id, qp.id, qu.id
+       ORDER BY t.activity_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset, currentUserId]
     )
@@ -155,20 +174,29 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
   const body     = (req.body.body || '').trim()
   const location = (req.body.location || '').trim().slice(0, 100)
   const mediaUrls = (req.files || []).map(f => `/api/uploads/${f.filename}`)
+  const quotePostId = req.body.quote_post_id ? parseInt(req.body.quote_post_id) : null
 
-  if (!body && mediaUrls.length === 0) {
+  if (!body && mediaUrls.length === 0 && !quotePostId) {
     return res.status(400).json({ error: 'Post must have text or media.' })
+  }
+  if (quotePostId !== null && isNaN(quotePostId)) {
+    return res.status(400).json({ error: 'Invalid quoted post ID.' })
   }
   if (body.length > 280) {
     return res.status(400).json({ error: 'Post cannot exceed 280 characters.' })
   }
 
   try {
+    if (quotePostId) {
+      const quoteRes = await pool.query('SELECT id FROM posts WHERE id = $1', [quotePostId])
+      if (quoteRes.rowCount === 0) return res.status(404).json({ error: 'Quoted post not found.' })
+    }
+
     const result = await pool.query(
-      `INSERT INTO posts (user_id, body, media_urls, location)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, body, media_urls, location, created_at`,
-      [req.user.userId, body, mediaUrls, location]
+      `INSERT INTO posts (user_id, body, media_urls, location, quote_post_id)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, body, media_urls, location, quote_post_id, created_at`,
+      [req.user.userId, body, mediaUrls, location, quotePostId]
     )
     const post = result.rows[0]
 
@@ -181,6 +209,7 @@ router.post('/', requireAuth, upload.array('media', 4), async (req, res) => {
         body: post.body,
         media_urls: post.media_urls || [],
         location: post.location || '',
+        quote_post_id: post.quote_post_id,
         created_at: post.created_at,
         user_id: u.id,
         first_name: u.first_name,

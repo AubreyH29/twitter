@@ -537,3 +537,100 @@ video.post-media-thumb {
 @media (max-width: 860px) {
   .sidebar, .aside-right { display: none; }
 }
+
+.repost-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -4px 0 -8px 50px;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.repost-context svg { width: 16px; height: 16px; }
+.repost-action-wrap { position: relative; }
+.repost-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  min-width: 150px;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+}
+.repost-menu button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+.repost-menu button:hover { background: #f8fafc; }
+.quoted-post {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #fff;
+}
+.quoted-post-meta { color: #64748b; font-size: 0.86rem; }
+.quoted-post-meta strong { color: #0f172a; }
+.quoted-post-text { margin: 0; color: #0f172a; line-height: 1.45; }
+.quoted-post-media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.quoted-post-media { width: 100%; height: 120px; object-fit: cover; border-radius: 12px; background: #f1f5f9; }
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.45);
+}
+.quote-modal {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+}
+.quote-modal-header,
+.quote-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.quote-modal-header h2 { margin: 0; font-size: 1.1rem; }
+.modal-close {
+  border: 0;
+  background: #f1f5f9;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.quote-modal textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px;
+  resize: vertical;
+  font: inherit;
+  outline: none;
+}
+.quote-modal textarea:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12); }
+.quote-modal-preview { background: #f8fafc; }
+.quote-modal-actions span { color: #64748b; font-size: 0.85rem; }
