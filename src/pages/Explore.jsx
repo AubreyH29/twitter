@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
 import WhoToFollow from '../components/WhoToFollow'
+import SearchBox from '../components/SearchBox'
 import './Feed.css'
 
 const TRENDS = [
@@ -13,6 +15,9 @@ const TRENDS = [
 ]
 
 export default function Explore() {
+  const [searchParams] = useSearchParams()
+  const query = searchParams.get('q')?.trim() || ''
+  const isSearching = query.length > 0
   const [posts, setPosts] = useState([])
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
@@ -22,7 +27,10 @@ export default function Explore() {
 
   const loadPosts = useCallback(async (pageNum) => {
     try {
-      const data = await api.get(`/posts?page=${pageNum}`)
+      const path = isSearching
+        ? `/posts/search?q=${encodeURIComponent(query)}&page=${pageNum}`
+        : `/posts?page=${pageNum}`
+      const data = await api.get(path)
       if (pageNum === 1) setPosts(data.posts)
       else setPosts(prev => [...prev, ...data.posts])
       setHasMore(data.hasMore)
@@ -33,9 +41,14 @@ export default function Explore() {
       setLoadingInitial(false)
       setLoadingMore(false)
     }
-  }, [])
+  }, [isSearching, query])
 
-  useEffect(() => { loadPosts(1) }, [loadPosts])
+  useEffect(() => {
+    setLoadingInitial(true)
+    setLoadingMore(false)
+    setHasMore(true)
+    loadPosts(1)
+  }, [loadPosts])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -57,11 +70,13 @@ export default function Explore() {
       <main className="content">
         <div className="topnav-sticky">
           <div style={{ padding: '4px 0' }}>
-            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>Explore</h2>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#111827' }}>{isSearching ? `Search results for “${query}”` : 'Explore'}</h2>
           </div>
         </div>
 
-        <div className="card explore-card" style={{ marginTop: 16 }}>
+        <SearchBox autoFocus />
+
+        {!isSearching && <div className="card explore-card" style={{ marginTop: 16 }}>
           <div className="section-heading">
             <div className="section-title">Trending</div>
             <div className="section-status">Live</div>
@@ -79,10 +94,11 @@ export default function Explore() {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         <section className="feed">
-          {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
+          {loadingInitial && <div className="feed-loading-state">{isSearching ? 'Searching posts…' : 'Loading posts…'}</div>}
+          {!loadingInitial && isSearching && posts.length === 0 && <div className="feed-loading-state">{`No posts found for “${query}”.`}</div>}
           {posts.map(p => <PostCard key={p.id} post={p} />)}
           <div ref={sentinelRef} className="feed-sentinel">
             {loadingMore && <span className="feed-loading">Loading more…</span>}
