@@ -4,7 +4,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "fake:tweets": "node scripts/generate-fake-tweets.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
