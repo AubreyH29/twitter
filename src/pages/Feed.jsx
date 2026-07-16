@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { api } from '../api'
 import Sidebar from '../components/Sidebar'
@@ -9,6 +10,7 @@ import ReplyModal from '../components/ReplyModal'
 import './Feed.css'
 
 const TABS = ['For You', 'Following', 'Tech', 'Design', 'News', 'Fitness']
+const CATEGORY_TABS = TABS.filter(tab => !['For You', 'Following'].includes(tab))
 
 const TRENDS = [
   { title: 'Trending in Tech', sub: 'React 19 · 24.5K posts', avatars: ['R', 'T', 'D'] },
@@ -19,7 +21,11 @@ const TRENDS = [
 
 export default function Feed() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState(0)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedCategory = searchParams.get('category') || ''
+  const activeTab = selectedCategory
+    ? TABS.findIndex(tab => tab.toLowerCase() === selectedCategory.toLowerCase())
+    : 0
   const tabsRef = useRef(null)
   const [canPrev, setCanPrev] = useState(false)
   const [canNext, setCanNext] = useState(true)
@@ -39,7 +45,9 @@ export default function Feed() {
 
   const loadPosts = useCallback(async (pageNum) => {
     try {
-      const data = await api.get(`/posts?page=${pageNum}`)
+      const params = new URLSearchParams({ page: String(pageNum) })
+      if (selectedCategory) params.set('category', selectedCategory.toLowerCase())
+      const data = await api.get(`/posts?${params.toString()}`)
       if (pageNum === 1) setPosts(data.posts)
       else setPosts(prev => [...prev, ...data.posts])
       setHasMore(data.hasMore)
@@ -50,9 +58,15 @@ export default function Feed() {
       setLoadingInitial(false)
       setLoadingMore(false)
     }
-  }, [])
+  }, [selectedCategory])
 
-  useEffect(() => { loadPosts(1) }, [loadPosts])
+  useEffect(() => {
+    setLoadingInitial(true)
+    setLoadingMore(false)
+    setHasMore(true)
+    setPosts([])
+    loadPosts(1)
+  }, [loadPosts])
 
   useEffect(() => {
     const sentinel = sentinelRef.current
@@ -119,6 +133,14 @@ export default function Feed() {
     }
   }
 
+  function handleTabClick(tab) {
+    if (CATEGORY_TABS.includes(tab)) {
+      setSearchParams({ category: tab.toLowerCase() })
+      return
+    }
+    setSearchParams({})
+  }
+
   const updateArrows = () => {
     const el = tabsRef.current
     if (!el) return
@@ -144,7 +166,7 @@ export default function Feed() {
           <div className="tabs-wrap">
             <div className="page-tabs" ref={tabsRef}>
               {TABS.map((t, i) => (
-                <button key={i} className={`tab${activeTab === i ? ' active' : ''}`} onClick={() => setActiveTab(i)}>
+                <button key={i} className={`tab${activeTab === i ? ' active' : ''}`} onClick={() => handleTabClick(t)}>
                   {t}
                 </button>
               ))}
@@ -164,6 +186,12 @@ export default function Feed() {
           <Composer initials={initials} onPost={(post) => setPosts(prev => [post, ...prev])} />
 
           {loadingInitial && <div className="feed-loading-state">Loading posts…</div>}
+
+          {!loadingInitial && posts.length === 0 && (
+            <div className="feed-loading-state">
+              {selectedCategory ? `No ${selectedCategory} posts yet.` : 'No posts yet.'}
+            </div>
+          )}
 
           {posts.map((p) => (
             <PostCard key={`${p.id}-${p.activity_at || p.created_at}-${p.reposted_by_id || 'post'}`} post={p} onQuote={setQuotePost} onReply={setReplyModal} onRepostChange={handleRepostChange} onDelete={(id) => setPosts(prev => prev.filter(x => x.id !== id))} />
