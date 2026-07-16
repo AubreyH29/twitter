@@ -5,6 +5,7 @@ import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
 import ReplyModal from '../components/ReplyModal'
+import SearchBox from '../components/SearchBox'
 import './Profile.css'
 import './Feed.css'
 
@@ -401,15 +402,7 @@ export default function Profile() {
       {/* ── Right Aside ── */}
       <aside className="aside-right">
         <div className="aside-sticky">
-          <div className="search-box">
-            <input type="search" placeholder="Search" />
-            <span className="search-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10" cy="10" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                <path d="M16.5 16.5l4 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </span>
-          </div>
+          <SearchBox />
           {profile && (
             <div className="card follow-card">
               <div className="section-title">About @{username}</div>

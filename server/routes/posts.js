@@ -104,6 +104,51 @@ router.get('/', requireAuth, async (req, res) => {
   }
 })
 
+
+// ─── GET /api/posts/search?q=term&page=1 ─────────────────────────────────────
+router.get('/search', requireAuth, async (req, res) => {
+  const q = (req.query.q || '').trim()
+  const page = Math.max(1, parseInt(req.query.page) || 1)
+  const limit = 20
+  const offset = (page - 1) * limit
+  const currentUserId = req.user.userId
+
+  if (!q) return res.json({ posts: [], page, hasMore: false })
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
+         u.id AS user_id, u.first_name, u.last_name, u.username,
+         COUNT(DISTINCT l.user_id)::int  AS like_count,
+         COUNT(DISTINCT r.user_id)::int  AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+         EXISTS(SELECT 1 FROM likes     WHERE post_id = p.id AND user_id = $4) AS liked_by_me,
+         EXISTS(SELECT 1 FROM reposts   WHERE post_id = p.id AND user_id = $4) AS reposted_by_me,
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $4) AS bookmarked_by_me,
+         qp.body AS quoted_body, qp.media_urls AS quoted_media_urls, qp.created_at AS quoted_created_at,
+         qu.id AS quoted_user_id, qu.first_name AS quoted_first_name, qu.last_name AS quoted_last_name, qu.username AS quoted_username
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN posts qp ON qp.id = p.quote_post_id
+       LEFT JOIN users qu ON qu.id = qp.user_id
+       LEFT JOIN likes   l ON l.post_id = p.id
+       LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.deleted_at IS NULL
+         AND p.reply_to_id IS NULL
+         AND (p.body ILIKE $1 OR u.username ILIKE $1 OR u.first_name ILIKE $1 OR u.last_name ILIKE $1)
+       GROUP BY p.id, u.id, qp.id, qu.id
+       ORDER BY p.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [`%${q}%`, limit, offset, currentUserId]
+    )
+    return res.json({ posts: result.rows, page, hasMore: result.rows.length === limit })
+  } catch (err) {
+    console.error('Search posts error:', err)
+    return res.status(500).json({ error: 'Failed to search posts.' })
+  }
+})
+
 // ─── GET /api/posts/user/:username ───────────────────────────────────────────
 router.get('/user/:username', requireAuth, async (req, res) => {
   const { username } = req.params
@@ -173,6 +218,7 @@ router.get('/user/:username', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Failed to load profile.' })
   }
 })
+
 
 // ─── GET /api/posts/user/:username/replies ───────────────────────────────────
 router.get('/user/:username/replies', requireAuth, async (req, res) => {
