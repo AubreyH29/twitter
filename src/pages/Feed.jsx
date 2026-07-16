@@ -4,18 +4,12 @@ import { api } from '../api'
 import Sidebar from '../components/Sidebar'
 import PostCard from '../components/PostCard'
 import Composer from '../components/Composer'
-import WhoToFollow from '../components/WhoToFollow'
+import TrendingTweets from '../components/TrendingTweets'
 import ReplyModal from '../components/ReplyModal'
 import './Feed.css'
 
 const TABS = ['For You', 'Following', 'Tech', 'Design', 'News', 'Fitness']
 
-const TRENDS = [
-  { title: 'Trending in Tech', sub: 'React 19 · 24.5K posts', avatars: ['R', 'T', 'D'] },
-  { title: 'Trending in Design', sub: 'UI Trends 2025 · 12K posts', avatars: ['U', 'I', 'X'] },
-  { title: 'Trending Worldwide', sub: 'Open Source · 8.2K posts', avatars: ['O', 'S', 'G'] },
-  { title: 'Trending in Business', sub: 'Startups · 5.1K posts', avatars: ['S', 'B', 'V'] },
-]
 
 export default function Feed() {
   const { user } = useAuth()
@@ -188,27 +182,7 @@ export default function Feed() {
             </span>
           </div>
 
-          <div className="card explore-card">
-            <div className="section-heading">
-              <div className="section-title">Trending</div>
-              <div className="section-status">Live</div>
-            </div>
-            <div className="trend-list">
-              {TRENDS.map((t, i) => (
-                <div key={i} className="trend-item">
-                  <div className="trend-title">{t.title}</div>
-                  <div className="trend-meta">
-                    <div className="trend-avatars">
-                      {t.avatars.map((a, j) => <div key={j} className="avatar tiny">{a}</div>)}
-                    </div>
-                    <div className="trend-subtitle">{t.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <WhoToFollow />
+          <TrendingTweets />
         </div>
       </aside>
 

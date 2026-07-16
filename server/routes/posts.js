@@ -222,6 +222,52 @@ router.get('/user/:username/replies', requireAuth, async (req, res) => {
   }
 })
 
+
+// ─── GET /api/posts/trending ─────────────────────────────────────────────────
+router.get('/trending', requireAuth, async (req, res) => {
+  const currentUserId = req.user.userId
+  const limit = Math.min(10, Math.max(1, parseInt(req.query.limit, 10) || 5))
+
+  try {
+    const result = await pool.query(
+      `SELECT
+         p.id, p.body, p.media_urls, p.location, p.created_at, p.quote_post_id, p.reply_to_id,
+         u.id AS user_id, u.first_name, u.last_name, u.username,
+         COUNT(DISTINCT l.user_id)::int AS like_count,
+         COUNT(DISTINCT r.user_id)::int AS repost_count,
+         (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL)::int AS reply_count,
+         EXISTS(SELECT 1 FROM likes WHERE post_id = p.id AND user_id = $2) AS liked_by_me,
+         EXISTS(SELECT 1 FROM reposts WHERE post_id = p.id AND user_id = $2) AS reposted_by_me,
+         EXISTS(SELECT 1 FROM bookmarks WHERE post_id = p.id AND user_id = $2) AS bookmarked_by_me,
+         qp.body AS quoted_body, qp.media_urls AS quoted_media_urls, qp.created_at AS quoted_created_at,
+         qu.id AS quoted_user_id, qu.first_name AS quoted_first_name, qu.last_name AS quoted_last_name, qu.username AS quoted_username,
+         (
+           COUNT(DISTINCT l.user_id) * 3
+           + COUNT(DISTINCT r.user_id) * 5
+           + (SELECT COUNT(*) FROM posts rp WHERE rp.reply_to_id = p.id AND rp.deleted_at IS NULL) * 4
+         )::int AS trend_score
+       FROM posts p
+       JOIN users u ON u.id = p.user_id
+       LEFT JOIN posts qp ON qp.id = p.quote_post_id
+       LEFT JOIN users qu ON qu.id = qp.user_id
+       LEFT JOIN likes l ON l.post_id = p.id
+       LEFT JOIN reposts r ON r.post_id = p.id
+       WHERE p.deleted_at IS NULL
+         AND p.reply_to_id IS NULL
+         AND p.created_at >= NOW() - INTERVAL '7 days'
+       GROUP BY p.id, u.id, qp.id, qu.id
+       ORDER BY trend_score DESC, p.created_at DESC
+       LIMIT $1`,
+      [limit, currentUserId]
+    )
+
+    return res.json({ posts: result.rows })
+  } catch (err) {
+    console.error('Get trending posts error:', err)
+    return res.status(500).json({ error: 'Failed to load trending posts.' })
+  }
+})
+
 // ─── GET /api/posts/:id ───────────────────────────────────────────────────────
 router.get('/:id', requireAuth, async (req, res) => {
   const postId = parseInt(req.params.id, 10)
@@ -290,6 +336,7 @@ router.get('/:id', requireAuth, async (req, res) => {
     return res.status(500).json({ error: 'Failed to load post.' })
   }
 })
+
 
 // ─── GET /api/posts/:id/replies ───────────────────────────────────────────────
 router.get('/:id/replies', requireAuth, async (req, res) => {
