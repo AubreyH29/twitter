@@ -53,6 +53,9 @@ router.get('/', requireAuth, async (req, res) => {
   const limit = 20
   const offset = (page - 1) * limit
   const currentUserId = req.user.userId
+  const categories = ['tech', 'design', 'news', 'fitness']
+  const category = typeof req.query.category === 'string' ? req.query.category.toLowerCase() : null
+  const selectedCategory = categories.includes(category) ? category : null
 
   try {
     const result = await pool.query(
@@ -92,10 +95,13 @@ router.get('/', requireAuth, async (req, res) => {
        LEFT JOIN likes   l ON l.post_id = p.id
        LEFT JOIN reposts r ON r.post_id = p.id
        WHERE p.deleted_at IS NULL AND p.reply_to_id IS NULL
+         AND ($4::text IS NULL
+          OR p.body ILIKE ('%' || $4 || '%')
+          OR p.location ILIKE ('%' || $4 || '%'))
        GROUP BY p.id, u.id, t.activity_at, t.reposted_by_id, ru.id, qp.id, qu.id
        ORDER BY t.activity_at DESC
        LIMIT $1 OFFSET $2`,
-      [limit, offset, currentUserId]
+      [limit, offset, currentUserId, selectedCategory]
     )
     return res.json({ posts: result.rows, page, hasMore: result.rows.length === limit })
   } catch (err) {
